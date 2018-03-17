@@ -1,6 +1,7 @@
 package com.github.enpassant.ickenham
 
 import com.github.enpassant.ickenham.adapter.Json4sAdapter
+import com.github.enpassant.ickenham.adapter.PlainAdapter
 
 import org.json4s.JsonAST._
 import org.scalatest._
@@ -33,6 +34,44 @@ class IckenhamSpec extends FunSpec with Matchers {
       )
     ))
   )
+
+  val adapterPlain = new PlainAdapter()
+
+  val discussionPlain = Map(
+    "_id" -> 5,
+    "comments" -> List(
+      Map(
+        "_id" -> 5,
+        "commentId" -> "7",
+        "userName" -> "John",
+        "content" -> "<h1>Test comment 1</h1>",
+        "comments" -> List(
+          Map(
+            "_id" -> 5,
+            "commentId" -> "8",
+            "userName" -> "Susan",
+            "content" -> "<h2>Reply</h2>"
+          )
+        )
+      ),
+      Map(
+        "_id" -> 5,
+        "commentId" -> "9",
+        "userName" -> "George",
+        "content" -> "<h1>Test comment 2</h1>"
+      )
+    )
+  )
+
+  describe("apply with PlainAdapter") {
+    it("should create the expected html") {
+      val ickenham = new Ickenham(adapterPlain)
+      val resultHtml = ickenham.apply("comment")(discussionPlain)
+      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      resultHtml.replaceAll("\\s+", " ") shouldBe
+        expectedCommentHtml.replaceAll("\\s+", " ")
+    }
+  }
 
   describe("apply") {
     it("should create the expected html") {
