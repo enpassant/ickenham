@@ -7,7 +7,7 @@ import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
 import scala.util.Try
 
-object Ickenham {
+class Ickenham {
   type Templates = Map[String, Vector[Tag]]
 
   def apply(fileName: String): JValue => String = {

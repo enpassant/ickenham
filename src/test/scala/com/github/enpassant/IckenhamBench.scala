@@ -45,13 +45,13 @@ object IckenhamBench extends Bench.LocalTime {
       exec.maxWarmupRuns -> 5
     ) in {
       using(ranges) in {
-        _.map(i => Ickenham.apply("comment")(discussion))
+        _.map(i => new Ickenham().apply("comment")(discussion))
       }
     }
   }
 
   performance of "Ickenham" in {
-    val templates = Ickenham.compile("comment")
+    val templates = new Ickenham().compile("comment")
 
     measure method "render" config (
       exec.benchRuns -> 5,
