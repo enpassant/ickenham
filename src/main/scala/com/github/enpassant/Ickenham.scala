@@ -133,7 +133,6 @@ class Ickenham[T](adapter: Adapter[T]) {
   }
 
   def mkString(strings: Seq[String]) = {
-    //strings.mkString
     val length = strings.foldLeft(0)(_ + _.length)
     val sb = new java.lang.StringBuilder(length)
     strings.foreach { str =>
