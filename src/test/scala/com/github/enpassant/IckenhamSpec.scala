@@ -1,9 +1,13 @@
 package com.github.enpassant.ickenham
 
+import com.github.enpassant.ickenham.adapter.Json4sAdapter
+
 import org.json4s.JsonAST._
 import org.scalatest._
 
 class IckenhamSpec extends FunSpec with Matchers {
+  val adapter = new Json4sAdapter()
+
   val discussion = JObject(
     "_id" -> JString("5"),
     "comments" -> JArray(List(
@@ -32,7 +36,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("apply") {
     it("should create the expected html") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val resultHtml = ickenham.apply("comment")(discussion)
       val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
@@ -42,7 +46,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("compile") {
     it("should create the expected html") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "comment"
       val resultHtml = ickenham.compile(template)(discussion)
       val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
@@ -53,7 +57,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("parse") {
     it("should create the expected html for simple block") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "\n  PREFIX  \n  {{#each comments}}  \n  BLOCK  \n  " +
         "{{#if value}}  \n  CONDITION  \n  {{/if}}  \n  {{/each}}  \n  " +
         "SUFFIX"
@@ -72,7 +76,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
 
     it("should create the expected html") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = ickenham.loadFile("comment.hbs")
       val tags = ickenham.parse(template)
       val expectedTags = Vector(
@@ -127,27 +131,27 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("searchNextTag") {
     it("should find the next value tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "PREFIX {{../commentId}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
         Some(NextTag("PREFIX ", ValueTag("../commentId"), " SUFFIX"))
     }
     it("should find the next include tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "PREFIX {{> comment}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
         Some(NextTag("PREFIX ", IncludeTag("comment"), " SUFFIX"))
     }
     it("should find the next end tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "PREFIX \n{{/each}}\n SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe Some(NextTag("PREFIX ", EndTag("each"), " SUFFIX"))
     }
     it("should find the next block tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val template = "PREFIX {{#each comments}} BLOCK {{/each}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
@@ -158,7 +162,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("loadFile") {
     it("should load the specified file") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
       expectedCommentHtml should startWith("\n<div class=\"comment\" id=\"7\">")
     }
@@ -166,7 +170,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("assemble") {
     it("should assemble the text tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val tag = TextTag("Sample Text")
       val templates = Map("test" -> Vector(tag))
       val assembled = ickenham.assemble("test", templates)(discussion)
@@ -176,7 +180,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("assemble") {
     it("should assemble the value tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val tag = ValueTag("_id")
       val templates = Map("test" -> Vector(tag))
       val assembled = ickenham.assemble("test", templates)(discussion)
@@ -186,7 +190,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("assemble") {
     it("should assemble the include tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val tag = IncludeTag("comment")
       val tagId = ValueTag("_id")
       val templates = Map("test" -> Vector(tag), "comment" -> Vector(tagId))
@@ -197,7 +201,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("assemble") {
     it("should assemble the each include tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("each", "comments", Vector(
         IncludeTag("comment"))))
       val comment = Vector(ValueTag("commentId"))
@@ -209,7 +213,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("assemble") {
     it("should assemble the if include tag") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("if", "comments", Vector(
         IncludeTag("comment"))))
       val comment = Vector(ValueTag("_id"))
@@ -221,7 +225,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("getVariable") {
     it("should get the _id value") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val value = ickenham.getVariable("_id", List(discussion))
       value shouldBe JString("5")
     }
@@ -229,7 +233,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("getVariable") {
     it("should get the name and age values") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val json = JObject("person" ->
         JObject("name" -> JString("Joe"), "age" -> JInt(50)))
       val name = ickenham.getVariable("./person/this/name", List(json))
@@ -240,7 +244,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   describe("getVariable") {
     it("should get the parent name and age values") {
-      val ickenham = new Ickenham()
+      val ickenham = new Ickenham(adapter)
       val json = JObject("person" ->
         JObject("name" -> JString("Joe"), "age" -> JInt(50)))
       val name = ickenham.getVariable("./person/../person/name", List(json))

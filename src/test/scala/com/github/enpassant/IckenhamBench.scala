@@ -1,11 +1,15 @@
 package com.github.enpassant.ickenham
 
+import com.github.enpassant.ickenham.adapter.Json4sAdapter
+
 import com.github.jknack.handlebars.{ Context, Handlebars, Template }
 import fixiegrips.{ Json4sHelpers, Json4sResolver }
 import org.json4s.JsonAST._
 import org.scalameter.api._
 
 object IckenhamBench extends Bench.LocalTime {
+  val adapter = new Json4sAdapter()
+
   val discussion = JObject(
     "_id" -> JString("5"),
     "comments" -> JArray(List(
@@ -45,13 +49,13 @@ object IckenhamBench extends Bench.LocalTime {
       exec.maxWarmupRuns -> 5
     ) in {
       using(ranges) in {
-        _.map(i => new Ickenham().apply("comment")(discussion))
+        _.map(i => new Ickenham(adapter).apply("comment")(discussion))
       }
     }
   }
 
   performance of "Ickenham" in {
-    val templates = new Ickenham().compile("comment")
+    val templates = new Ickenham(adapter).compile("comment")
 
     measure method "render" config (
       exec.benchRuns -> 5,

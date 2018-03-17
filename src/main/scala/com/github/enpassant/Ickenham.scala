@@ -1,16 +1,17 @@
 package com.github.enpassant.ickenham
 
-import org.json4s._
+import com.github.enpassant.ickenham.adapter.Adapter
+
 //import scala.io.Source
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
 import scala.util.Try
 
-class Ickenham {
+class Ickenham[T](adapter: Adapter[T]) {
   type Templates = Map[String, Vector[Tag]]
 
-  def apply(fileName: String): JValue => String = {
+  def apply(fileName: String): T => String = {
     compile(fileName)
   }
 
@@ -22,7 +23,7 @@ class Ickenham {
     }).toMap
   }
 
-  def compile(template: String): JValue => String = {
+  def compile(template: String): T => String = {
     val templates = compiles(template)
     val assembledFn = assemble(template, templates)
     json => assembledFn(json)
@@ -83,59 +84,53 @@ class Ickenham {
   private def csl(str: CharSequence) = str.toString.replaceAll("^\\s+", " ")
   private def csr(str: CharSequence) = str.toString.replaceAll("\\s+$", " ")
 
-  def assemble(template: String, templates: Templates): JValue => String = {
+  def assemble(template: String, templates: Templates): T => String = {
     val tags = templates(template)
     val substitutedFn = substitute(tags, templates)
     json => substitutedFn(List(json))
   }
 
   def substitute(tags: Vector[Tag], templates: Templates):
-    List[JValue] => String =
+    List[T] => String =
   {
-    implicit val formats = DefaultFormats
-
     val substituted = tags.map { tag =>
       tag match {
         case TextTag(text) =>
-          path: List[JValue] => text
+          path: List[T] => text
         case ValueTag(variableName) =>
           val names = getVariableNameList(variableName)
-          path: List[JValue] =>
+          path: List[T] =>
             val value = getVariableLoop(names, path)
-            value.extract[String]
+            adapter.extractString(value)
         case IncludeTag(templateName) =>
           path => substitute(templates(templateName), templates)(path)
         case BlockTag("if", name, content) =>
           val substitutedFn = substitute(content, templates)
           val names = getVariableNameList(name)
 
-          path: List[JValue] =>
-            getVariableLoop(names, path).toOption match {
-              case None =>
-                ""
-              case Some(jValue) =>
-                substitutedFn(path)
+          path: List[T] =>
+            if (adapter.isEmpty(getVariableLoop(names, path))) {
+              ""
+            } else {
+              substitutedFn(path)
             }
         case BlockTag("each", name, content) =>
           val substitutedFn = substitute(content, templates)
           val names = getVariableNameList(name)
 
-          path: List[JValue] =>
-            getVariableLoop(names, path) match {
-              case array: JArray =>
-                val substitutedItems = array.children map { item =>
-                  substitutedFn(item :: path)
-                }
-                mkString(substitutedItems)
-              case _ => "ERROR!"
+          path: List[T] =>
+            val children = adapter.getChildren(getVariableLoop(names, path))
+            val substitutedItems = children map { item =>
+              substitutedFn(item :: path)
             }
+            mkString(substitutedItems)
         case BlockTag(blockName, name, content) =>
-          path: List[JValue] => s"Block: $blockName"
+          path: List[T] => s"Block: $blockName"
         case EndTag(blockName) =>
-          path: List[JValue] => "ERROR!"
+          path: List[T] => "ERROR!"
       }
     }
-    path: List[JValue] => mkString(substituted.map(_(path)))
+    path: List[T] => mkString(substituted.map(_(path)))
   }
 
   def mkString(strings: Seq[String]) = {
@@ -156,27 +151,21 @@ class Ickenham {
       .toList
   }
 
-  def getVariable(variableName: String, path: List[JValue]): JValue = {
+  def getVariable(variableName: String, path: List[T]): T = {
     val names = getVariableNameList(variableName)
     getVariableLoop(names, path)
   }
 
-  def getVariableLoop(names: List[String], path: List[JValue]):
-    JValue =
-  {
+  def getVariableLoop(names: List[String], path: List[T]): T = {
     names match {
       case "" :: tail => getVariableLoop(tail, path)
       case "this" :: tail => getVariableLoop(tail, path)
       case "_parent_" :: tail => getVariableLoop(tail, path.tail)
-      case name :: Nil => path.head \ name
+      case name :: Nil => adapter.getChild(path.head, name)
       case name :: tail =>
-        val child = path.head \ name
-        child match {
-          case jObject: JObject =>
-            getVariableLoop(tail, jObject :: path)
-          case _ => JString("Error")
-        }
-      case _ => JString("Error")
+        val child = adapter.getChild(path.head, name)
+        getVariableLoop(tail, child :: path)
+      case _ => adapter.asValue("Error")
     }
   }
 
