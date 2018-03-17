@@ -2,7 +2,6 @@ package com.github.enpassant.ickenham
 
 import com.github.enpassant.ickenham.adapter.Adapter
 
-//import scala.io.Source
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
@@ -171,10 +170,6 @@ class Ickenham[T](adapter: Adapter[T]) {
 
   def loadFile(fileName: String): String = {
     val resultTry = Try {
-      //val source = Source.fromResource(fileName)
-      //val result = source.getLines.mkString("\n")
-      //source.close
-      //result
       new String(Files.readAllBytes(
         Paths.get(getClass.getResource("/" + fileName).getFile)), UTF_8)
     }
