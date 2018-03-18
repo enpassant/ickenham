@@ -98,7 +98,8 @@ class IckenhamSpec extends FunSpec with Matchers {
     it("should create the expected html for simple block") {
       val ickenham = new Ickenham(adapter)
       val template = "\n  PREFIX  \n  {{#each comments}}  \n  BLOCK  \n  " +
-        "{{#if value}}  \n  CONDITION  \n  {{/if}}  \n  {{/each}}  \n  " +
+        "{{#if value}}  \n  CONTENT  \n  {{else}}  \n  ELSE  \n  {{/if}}" +
+        "  \n  {{/each}}  \n  " +
         "SUFFIX"
       val tags = ickenham.parse(template)
       val expectedTags = Vector(
@@ -106,7 +107,9 @@ class IckenhamSpec extends FunSpec with Matchers {
         BlockTag("each", "comments", Vector(
           TextTag("  \n  BLOCK "),
           BlockTag("if", "value", Vector(
-            TextTag("  \n  CONDITION ")
+            TextTag("  \n  CONTENT ")
+          ), Vector(
+            TextTag(" ELSE ")
           )),
           TextTag(" ")
         )),
@@ -197,6 +200,12 @@ class IckenhamSpec extends FunSpec with Matchers {
         Some(NextTag("PREFIX ",
           BlockTag("each", "comments", Vector(TextTag(" BLOCK "))), " SUFFIX"))
     }
+    it("should find the next else tag") {
+      val ickenham = new Ickenham(adapter)
+      val template = "PREFIX \n{{else}}\n SUFFIX"
+      val nextTag = ickenham.searchNextTag(template)
+      nextTag shouldBe Some(NextTag("PREFIX ", ElseTag, " SUFFIX"))
+    }
   }
 
   describe("loadFile") {
@@ -259,6 +268,18 @@ class IckenhamSpec extends FunSpec with Matchers {
       val templates = Map("test" -> test, "comment" -> comment)
       val assembled = ickenham.assemble("test", templates)(discussion)
       assembled shouldBe "5"
+    }
+  }
+
+  describe("assemble") {
+    it("should assemble the if else tag") {
+      val ickenham = new Ickenham(adapter)
+      val test = Vector(BlockTag("if", "missing", Vector(
+        IncludeTag("comment")), Vector(TextTag("Missing"))))
+      val comment = Vector(ValueTag("_id"))
+      val templates = Map("test" -> test)
+      val assembled = ickenham.assemble("test", templates)(discussion)
+      assembled shouldBe "Missing"
     }
   }
 
