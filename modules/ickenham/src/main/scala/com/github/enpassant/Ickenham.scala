@@ -62,12 +62,14 @@ class Ickenham[T](adapter: Adapter[T]) {
   def searchNextTag(text: String): Option[NextTag] = {
     val elseTagRegex = """\{\{(else)\}\}"""
     val endTagRegex = """\{\{\/(\w+)\}\}"""
+    val valueTagUnescapedRegex = """\{\{\{([_a-zA-Z0-9\.\/]+)\}\}\}"""
     val valueTagRegex = """\{\{([_a-zA-Z0-9\.\/]+)\}\}"""
     val includeTagRegex = """\{\{>\s+([_a-zA-Z0-9\./]+)\}\}"""
     val blockTagRegex = """\{\{#(\w+)\s+([_a-zA-Z0-9\./]+)\}\}"""
     val regex = new Regex(
       elseTagRegex + "|" +
       endTagRegex + "|" +
+      valueTagUnescapedRegex + "|" +
       valueTagRegex + "|" +
       includeTagRegex + "|" +
       blockTagRegex
@@ -79,13 +81,15 @@ class Ickenham[T](adapter: Adapter[T]) {
       } else if (Option(m.group(2)) != None) {
         NextTag(csr(m.before), EndTag(m.group(2)), csl(m.after))
       } else if (Option(m.group(3)) != None) {
-        NextTag(m.before.toString, ValueTag(m.group(3)), m.after.toString)
+        NextTag(m.before.toString, ValueTag(m.group(3), false), m.after.toString)
       } else if (Option(m.group(4)) != None) {
-        NextTag(csr(m.before), IncludeTag(m.group(4)), csl(m.after))
+        NextTag(m.before.toString, ValueTag(m.group(4)), m.after.toString)
+      } else if (Option(m.group(5)) != None) {
+        NextTag(csr(m.before), IncludeTag(m.group(5)), csl(m.after))
       } else {
         val collected = collectTags(m.after.toString, Vector.empty[Tag])
         val blockTag =
-          BlockTag(m.group(5), m.group(6), collected.tags, collected.elseTags)
+          BlockTag(m.group(6), m.group(7), collected.tags, collected.elseTags)
         NextTag(csr(m.before), blockTag, collected.suffix)
       }
     }
@@ -107,11 +111,12 @@ class Ickenham[T](adapter: Adapter[T]) {
       tag match {
         case TextTag(text) =>
           path: List[T] => text
-        case ValueTag(variableName) =>
+        case ValueTag(variableName, needEscape) =>
           val names = getVariableNameList(variableName)
           path: List[T] =>
             val value = getVariableLoop(names, path)
-            adapter.extractString(value)
+            val result = adapter.extractString(value)
+            if (needEscape) escape(result) else result
         case IncludeTag(templateName) =>
           path => substitute(templates(templateName), templates)(path)
         case BlockTag("if", name, content, elseContent) =>
@@ -142,6 +147,12 @@ class Ickenham[T](adapter: Adapter[T]) {
       }
     }
     path: List[T] => mkString(substituted.map(_(path)))
+  }
+
+  def escape(string: String) = {
+    string
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
   }
 
   def mkString(strings: Seq[String]) = {
@@ -190,7 +201,7 @@ class Ickenham[T](adapter: Adapter[T]) {
 
 sealed trait Tag
 case class TextTag(text: String) extends Tag
-case class ValueTag(variableName: String) extends Tag
+case class ValueTag(variableName: String, escape: Boolean = true) extends Tag
 case class IncludeTag(templateName: String) extends Tag
 case class BlockTag(
   blockName: String,

@@ -11,6 +11,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   val discussion = JObject(
     "_id" -> JString("5"),
+    "escape" -> JString("5 < 6"),
     "comments" -> JArray(List(
       JObject(
         "_id" -> JString("5"),
@@ -39,6 +40,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
   val discussionPlain = Map(
     "_id" -> 5,
+    "escape" -> "5 < 6",
     "comments" -> List(
       Map(
         "_id" -> 5,
@@ -157,7 +159,7 @@ class IckenhamSpec extends FunSpec with Matchers {
         </div>
         <div>
             """),
-          ValueTag("content"),
+          ValueTag("content", false),
           TextTag("""
         </div>
     </div> """),
@@ -172,12 +174,19 @@ class IckenhamSpec extends FunSpec with Matchers {
   }
 
   describe("searchNextTag") {
-    it("should find the next value tag") {
+    it("should find the next escaped value tag") {
       val ickenham = new Ickenham(adapter)
       val template = "PREFIX {{../commentId}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
         Some(NextTag("PREFIX ", ValueTag("../commentId"), " SUFFIX"))
+    }
+    it("should find the next unescaped value tag") {
+      val ickenham = new Ickenham(adapter)
+      val template = "PREFIX {{{../commentId}}} SUFFIX"
+      val nextTag = ickenham.searchNextTag(template)
+      nextTag shouldBe
+        Some(NextTag("PREFIX ", ValueTag("../commentId", false), " SUFFIX"))
     }
     it("should find the next include tag") {
       val ickenham = new Ickenham(adapter)
@@ -227,12 +236,22 @@ class IckenhamSpec extends FunSpec with Matchers {
   }
 
   describe("assemble") {
-    it("should assemble the value tag") {
+    it("should assemble the escaped value tag") {
       val ickenham = new Ickenham(adapter)
-      val tag = ValueTag("_id")
+      val tag = ValueTag("escape")
       val templates = Map("test" -> Vector(tag))
       val assembled = ickenham.assemble("test", templates)(discussion)
-      assembled shouldBe "5"
+      assembled shouldBe "5 &lt; 6"
+    }
+  }
+
+  describe("assemble") {
+    it("should assemble the unescaped value tag") {
+      val ickenham = new Ickenham(adapter)
+      val tag = ValueTag("escape", false)
+      val templates = Map("test" -> Vector(tag))
+      val assembled = ickenham.assemble("test", templates)(discussion)
+      assembled shouldBe "5 < 6"
     }
   }
 
