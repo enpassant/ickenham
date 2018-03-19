@@ -4,6 +4,6 @@ trait Adapter[T] {
   def extractString(value: T): String
   def isEmpty(value: T): Boolean
   def getChildren(value: T): List[T]
-  def getChild(value: T, name: String): T
+  def getChild(value: T, name: String): Option[T]
   def asValue(text: String): T
 }

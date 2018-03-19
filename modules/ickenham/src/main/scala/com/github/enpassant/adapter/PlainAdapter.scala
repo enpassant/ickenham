@@ -17,9 +17,9 @@ class PlainAdapter extends Adapter[Any] {
     case any => List()
   }
 
-  override def getChild(value: Any, name: String): Any = value match {
-    case map: Map[Any, Any] => map.get(name).getOrElse(null)
-    case _ => value
+  override def getChild(value: Any, name: String): Option[Any] = value match {
+    case map: Map[Any, Any] => map.get(name)
+    case _ => None
   }
 
   override def asValue(text: String): Any = text

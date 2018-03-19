@@ -125,7 +125,7 @@ class Ickenham[T](adapter: Adapter[T]) {
           val names = getVariableNameList(name)
 
           path: List[T] =>
-            if (adapter.isEmpty(getVariableLoop(names, path))) {
+            if (adapter.isEmpty(getVariableLoop(names, path, true))) {
               substitutedElseFn(path)
             } else {
               substitutedFn(path)
@@ -167,6 +167,7 @@ class Ickenham[T](adapter: Adapter[T]) {
   def getVariableNameList(variableName: String): List[String] = {
     variableName
       .replace("..", "_parent_")
+      .replace("./", "this/")
       .replace(".", "/")
       .split("/")
       .toList
@@ -177,15 +178,26 @@ class Ickenham[T](adapter: Adapter[T]) {
     getVariableLoop(names, path)
   }
 
-  def getVariableLoop(names: List[String], path: List[T]): T = {
+  def getVariableLoop(
+    names: List[String],
+    path: List[T],
+    inContext: Boolean = false): T =
+  {
     names match {
-      case "" :: tail => getVariableLoop(tail, path)
-      case "this" :: tail => getVariableLoop(tail, path)
-      case "_parent_" :: tail => getVariableLoop(tail, path.tail)
-      case name :: Nil => adapter.getChild(path.head, name)
+      case "" :: tail => getVariableLoop(tail, path.last :: Nil, true)
+      case "this" :: tail => getVariableLoop(tail, path, true)
+      case "_parent_" :: tail => getVariableLoop(tail, path.tail, true)
+      case name :: Nil =>
+        adapter.getChild(path.head, name) match {
+          case Some(value) => value
+          case _ if path.tail == Nil || inContext => adapter.asValue("")
+          case _ => getVariableLoop(names, path.tail, inContext)
+        }
       case name :: tail =>
-        val child = adapter.getChild(path.head, name)
-        getVariableLoop(tail, child :: path)
+        adapter.getChild(path.head, name) match {
+          case Some(child) => getVariableLoop(tail, child :: path, true)
+          case _ => adapter.asValue("")
+        }
       case _ => adapter.asValue("Error")
     }
   }
