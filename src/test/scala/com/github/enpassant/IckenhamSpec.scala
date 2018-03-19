@@ -226,6 +226,16 @@ class IckenhamSpec extends FunSpec with Matchers {
   }
 
   describe("assemble") {
+    it("should assemble the unknown tag") {
+      val ickenham = new Ickenham(adapter)
+      val tag = ValueTag("content")
+      val templates = Map("test" -> Vector(tag))
+      val assembled = ickenham.assemble("test", templates)(discussion)
+      assembled shouldBe ""
+    }
+  }
+
+  describe("assemble") {
     it("should assemble the text tag") {
       val ickenham = new Ickenham(adapter)
       val tag = TextTag("Sample Text")
@@ -299,6 +309,14 @@ class IckenhamSpec extends FunSpec with Matchers {
       val templates = Map("test" -> test)
       val assembled = ickenham.assemble("test", templates)(discussion)
       assembled shouldBe "Missing"
+    }
+  }
+
+  describe("getVariable") {
+    it("should get the nothing value") {
+      val ickenham = new Ickenham(adapter)
+      val value = ickenham.getVariable("content", List(discussion))
+      value shouldBe JNothing
     }
   }
 

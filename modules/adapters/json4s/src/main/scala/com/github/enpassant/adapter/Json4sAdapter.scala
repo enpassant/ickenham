@@ -5,7 +5,10 @@ import org.json4s._
 class Json4sAdapter extends Adapter[JValue] {
   implicit val formats = DefaultFormats
 
-  override def extractString(value: JValue): String = value.extract[String]
+  override def extractString(value: JValue): String = value.toOption match {
+    case Some(v) => v.extract[String]
+    case _ => ""
+  }
 
   override def isEmpty(value: JValue): Boolean = !value.toOption.isDefined
 
