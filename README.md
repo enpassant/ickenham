@@ -1,5 +1,5 @@
 # Ickenham
-Ickenham is fast and concise template system, largely compatible with Handlebars and Mustache templates.
+Ickenham is fast and concise template system, largely compatible with [Handlebars](https://handlebarsjs.com/) and Mustache templates.
 
 Installation
 ============
