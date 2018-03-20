@@ -2,7 +2,7 @@ name := "ickenham-json4s"
 
 organization := "com.github.enpassant"
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 //scalaVersion := "2.12.4"
 
@@ -19,6 +19,8 @@ libraryDependencies ++= Seq(
 )
 
 publishMavenStyle := true
+
+useGpg := true
 
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
