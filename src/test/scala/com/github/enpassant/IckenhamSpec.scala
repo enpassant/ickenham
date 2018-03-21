@@ -2,6 +2,9 @@ package com.github.enpassant.ickenham
 
 import com.github.enpassant.ickenham.adapter.Json4sAdapter
 import com.github.enpassant.ickenham.adapter.PlainAdapter
+import com.github.enpassant.ickenham.adapter.JavaAdapter
+
+import collection.JavaConverters._
 
 import org.json4s.JsonAST._
 import org.scalatest._
@@ -58,11 +61,46 @@ class IckenhamSpec extends FunSpec with Matchers {
       )
     )
   )
+  val adapterJava = new JavaAdapter()
+
+  val discussionJava = Map(
+    "_id" -> 5,
+    "escape" -> "5 < 6",
+    "comments" -> List(
+      Map(
+        "commentId" -> "7",
+        "userName" -> "John",
+        "content" -> "<h1>Test comment 1</h1>",
+        "comments" -> List(
+          Map(
+            "commentId" -> "8",
+            "userName" -> "Susan",
+            "content" -> "<h2>Reply</h2>"
+          ).asJava
+        ).asJava
+      ).asJava,
+      Map(
+        "commentId" -> "9",
+        "userName" -> "George",
+        "content" -> "<h1>Test comment 2</h1>"
+      ).asJava
+    ).asJava
+  ).asJava
 
   describe("apply with PlainAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
       val resultHtml = ickenham.apply("comment")(discussionPlain)
+      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      resultHtml.replaceAll("\\s+", " ") shouldBe
+        expectedCommentHtml.replaceAll("\\s+", " ")
+    }
+  }
+
+  describe("apply with JavaAdapter") {
+    it("should create the expected html") {
+      val ickenham = new Ickenham(adapterJava)
+      val resultHtml = ickenham.apply("comment")(discussionJava)
       val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")

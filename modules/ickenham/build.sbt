@@ -2,9 +2,7 @@ name := "ickenham"
 
 organization := "com.github.enpassant"
 
-version := "1.0-SNAPSHOT"
-
-//scalaVersion := "2.12.4"
+version := "1.1-SNAPSHOT"
 
 scalaVersion := "2.11.11"
 
