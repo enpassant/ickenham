@@ -11,7 +11,7 @@ You can find available versions [here](https://mvnrepository.com/artifact/com.gi
 ### SBT users
 
 ```scala
-"com.github.enpassant" %% "ickenham" % "1.0"
+"com.github.enpassant" %% "ickenham" % "1.1.0"
 ```
 
 ### Maven users
@@ -20,6 +20,6 @@ You can find available versions [here](https://mvnrepository.com/artifact/com.gi
 <dependency>
   <groupId>com.github.enpassant</groupId>
   <artifactId>ickenham_${scala.version}</artifactId>
-  <version>1.0</version>
+  <version>1.1.0</version>
 </dependency>
 ```
