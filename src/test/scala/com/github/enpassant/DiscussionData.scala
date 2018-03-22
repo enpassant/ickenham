@@ -1,0 +1,98 @@
+package com.github.enpassant.ickenham
+
+import com.github.enpassant.ickenham.adapter.Json4sAdapter
+import com.github.enpassant.ickenham.adapter.PlainAdapter
+import com.github.enpassant.ickenham.adapter.JavaAdapter
+
+import collection.JavaConverters._
+
+import org.json4s.JsonAST._
+import org.scalatest._
+
+object DiscussonData {
+  val adapter = new Json4sAdapter()
+
+  val discussion = JObject(
+    "_id" -> JString("5"),
+    "escape" -> JString("5 < 6"),
+    "comments" -> JArray(List(
+      JObject(
+        "_id" -> JString("5"),
+        "commentId" -> JString("7"),
+        "userName" -> JString("John"),
+        "content" -> JString("<h1>Test comment 1</h1>"),
+        "comments" -> JArray(List(
+          JObject(
+            "_id" -> JString("5"),
+            "commentId" -> JString("8"),
+            "userName" -> JString("Susan"),
+            "content" -> JString("<h2>Reply</h2>"),
+            "comments" -> JNothing
+          )
+        ))
+      ),
+      JObject(
+        "_id" -> JString("5"),
+        "commentId" -> JString("9"),
+        "userName" -> JString("George"),
+        "content" -> JString("<h1>Test comment 2</h1>"),
+        "comments" -> JNothing
+      )
+    ))
+  )
+
+  val adapterPlain = new PlainAdapter()
+
+  val discussionPlain = Map(
+    "_id" -> 5,
+    "escape" -> "5 < 6",
+    "comments" -> List(
+      Map(
+        "_id" -> 5,
+        "commentId" -> "7",
+        "userName" -> "John",
+        "content" -> "<h1>Test comment 1</h1>",
+        "comments" -> List(
+          Map(
+            "_id" -> 5,
+            "commentId" -> "8",
+            "userName" -> "Susan",
+            "content" -> "<h2>Reply</h2>"
+          )
+        )
+      ),
+      Map(
+        "_id" -> 5,
+        "commentId" -> "9",
+        "userName" -> "George",
+        "content" -> "<h1>Test comment 2</h1>"
+      )
+    )
+  )
+
+  val adapterJava = new JavaAdapter()
+
+  val discussionJava = Map(
+    "_id" -> 5,
+    "escape" -> "5 < 6",
+    "comments" -> List(
+      Map(
+        "commentId" -> "7",
+        "userName" -> "John",
+        "content" -> "<h1>Test comment 1</h1>",
+        "comments" -> List(
+          Map(
+            "commentId" -> "8",
+            "userName" -> "Susan",
+            "content" -> "<h2>Reply</h2>"
+          ).asJava
+        ).asJava
+      ).asJava,
+      Map(
+        "commentId" -> "9",
+        "userName" -> "George",
+        "content" -> "<h1>Test comment 2</h1>"
+      ).asJava
+    ).asJava
+  ).asJava
+}
