@@ -13,7 +13,7 @@ import org.scalatest._
 class IckenhamSpec extends FunSpec with Matchers {
   import DiscussonData._
 
-  describe("apply with PlainAdapter") {
+  describe("compile with PlainAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
       val resultHtml = ickenham.compile("comment")(discussionPlain)
@@ -23,7 +23,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("apply with PlainAdapter and Writer") {
+  describe("compile with PlainAdapter and Writer") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
       val writer = new java.io.StringWriter()
@@ -36,7 +36,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("apply with PlainAdapter and OutputStream") {
+  describe("compile with PlainAdapter and OutputStream") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
       val baos = new java.io.ByteArrayOutputStream()
@@ -49,7 +49,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("apply with JavaAdapter") {
+  describe("compile with JavaAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterJava)
       val resultHtml = ickenham.compile("comment")(discussionJava)
@@ -59,21 +59,10 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("apply") {
-    it("should create the expected html") {
-      val ickenham = new Ickenham(adapter)
-      val resultHtml = ickenham.compile("comment")(discussion)
-      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
-      resultHtml.replaceAll("\\s+", " ") shouldBe
-        expectedCommentHtml.replaceAll("\\s+", " ")
-    }
-  }
-
   describe("compile") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapter)
-      val template = "comment"
-      val resultHtml = ickenham.compile(template)(discussion)
+      val resultHtml = ickenham.compile("comment")(discussion)
       val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
@@ -320,23 +309,25 @@ class IckenhamSpec extends FunSpec with Matchers {
       val value = ickenham.getVariable("content", List(discussion))
       value shouldBe JString("")
     }
-  }
-
-  describe("getVariable") {
     it("should get the _id value") {
       val ickenham = new Ickenham(adapter)
       val value = ickenham.getVariable("_id", List(discussion))
       value shouldBe JString("5")
     }
-  }
-
-  describe("getVariable") {
     it("should get the name and age values") {
       val ickenham = new Ickenham(adapter)
       val json = JObject("person" ->
         JObject("name" -> JString("Joe"), "age" -> JInt(50)))
       val name = ickenham.getVariable("./person/this/name", List(json))
       val age = ickenham.getVariable("./person/this/age", List(json))
+      (name, age) shouldBe (JString("Joe"), JInt(50))
+    }
+    it("should get the parent name and age values") {
+      val ickenham = new Ickenham(adapter)
+      val json = JObject("person" ->
+        JObject("name" -> JString("Joe"), "age" -> JInt(50)))
+      val name = ickenham.getVariable("./person/../person/name", List(json))
+      val age = ickenham.getVariable("./person/../person/age", List(json))
       (name, age) shouldBe (JString("Joe"), JInt(50))
     }
   }
@@ -358,17 +349,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val name = ickenham.getVariable("this/name", List(json))
       val age = ickenham.getVariable("this/age", List(json))
       (name, age) shouldBe ("Joe", 50)
-    }
-  }
-
-  describe("getVariable") {
-    it("should get the parent name and age values") {
-      val ickenham = new Ickenham(adapter)
-      val json = JObject("person" ->
-        JObject("name" -> JString("Joe"), "age" -> JInt(50)))
-      val name = ickenham.getVariable("./person/../person/name", List(json))
-      val age = ickenham.getVariable("./person/../person/age", List(json))
-      (name, age) shouldBe (JString("Joe"), JInt(50))
     }
   }
 }

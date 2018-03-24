@@ -129,11 +129,9 @@ class Ickenham[T](
           stream: Stream[_] => path: List[T] => stream.push(text)
         case HelperTag(helperName, variableName) =>
           val helper = helpers.get(helperName)
-          println(helper)
 
           stream: Stream[_] => path: List[T] =>
             val value = helper.flatMap(_(variableName))
-            println(value)
             value foreach { v: Any =>
               stream.push(v.toString)
             }
