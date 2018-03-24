@@ -23,6 +23,19 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
+  describe("apply with PlainAdapter and OutputStream") {
+    it("should create the expected html") {
+      val ickenham = new Ickenham(adapterPlain)
+      val baos = new java.io.ByteArrayOutputStream()
+      val stream = new OutputStreamStream(baos)
+      ickenham.compileWithStream("comment")(stream)(discussionPlain)
+      val resultHtml = baos.toString
+      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      resultHtml.replaceAll("\\s+", " ") shouldBe
+        expectedCommentHtml.replaceAll("\\s+", " ")
+    }
+  }
+
   describe("apply with JavaAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterJava)
