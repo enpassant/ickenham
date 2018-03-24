@@ -17,6 +17,9 @@ lazy val ickenham = (project in file("modules/ickenham"))
 lazy val json4s = (project in file("modules/adapters/json4s"))
   .dependsOn(ickenham)
 
+lazy val springmvc = (project in file("modules/spring-mvc"))
+  .dependsOn(ickenham)
+
 lazy val root = (project in file("."))
   .settings(
     libraryDependencies ++= Seq(
