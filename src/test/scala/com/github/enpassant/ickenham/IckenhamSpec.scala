@@ -17,7 +17,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
       val resultHtml = ickenham.compile("comment")(discussionPlain)
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -30,7 +30,7 @@ class IckenhamSpec extends FunSpec with Matchers {
       val stream = new WriterStream(writer)
       ickenham.compileWithStream("comment")(stream)(discussionPlain)
       val resultHtml = writer.toString
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -43,7 +43,7 @@ class IckenhamSpec extends FunSpec with Matchers {
       val stream = new OutputStreamStream(baos)
       ickenham.compileWithStream("comment")(stream)(discussionPlain)
       val resultHtml = baos.toString
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -53,7 +53,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterJava)
       val resultHtml = ickenham.compile("comment")(discussionJava)
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -63,7 +63,7 @@ class IckenhamSpec extends FunSpec with Matchers {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapter)
       val resultHtml = ickenham.compile("comment")(discussion)
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -74,7 +74,7 @@ class IckenhamSpec extends FunSpec with Matchers {
       val ickenham = new Ickenham(adapter)
       val template = "comment"
       val resultHtml = ickenham.compile(template)(discussion)
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
     }
@@ -105,7 +105,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
     it("should create the expected html") {
       val ickenham = new Ickenham(adapter)
-      val template = ickenham.loadFile("comment.hbs")
+      val template = Ickenham.loadFile("comment.hbs")
       val tags = ickenham.parse(template)
       val expectedTags = Vector(
         BlockTag("each", "comments", Vector(
@@ -211,7 +211,7 @@ class IckenhamSpec extends FunSpec with Matchers {
   describe("loadFile") {
     it("should load the specified file") {
       val ickenham = new Ickenham(adapter)
-      val expectedCommentHtml = ickenham.loadFile("expectedComment.html")
+      val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       expectedCommentHtml should startWith("\n<div class=\"comment\" id=\"7\">")
     }
   }
@@ -225,9 +225,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe ""
     }
-  }
-
-  describe("assemble") {
     it("should assemble the text tag") {
       val ickenham = new Ickenham(adapter)
       val tag = TextTag("Sample Text")
@@ -236,9 +233,20 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "Sample Text"
     }
-  }
-
-  describe("assemble") {
+    it("should assemble the helper tag") {
+      val i18nHelper = Map("example.title" -> "Example title")
+      val ickenham = new Ickenham(adapterPlain, Map("i18n" -> i18nHelper.get))
+      val textTag = TextTag("-")
+      val tag = HelperTag("i18n", "example.title")
+      val tagMissing = HelperTag("i18n", "example.value")
+      val helperMissing = HelperTag("capitalize", "example.title")
+      val templates =
+        Map("test" -> Vector(tag, textTag, tagMissing, textTag, helperMissing))
+      val json = Map()
+      val sbs = new StringBuilderStream()
+      val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
+      assembled shouldBe ("Example title--")
+    }
     it("should assemble the escaped value tag") {
       val ickenham = new Ickenham(adapter)
       val tag = ValueTag("escape")
@@ -247,9 +255,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "5 &lt; 6"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the unescaped value tag") {
       val ickenham = new Ickenham(adapter)
       val tag = ValueTag("escape", false)
@@ -258,9 +263,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "5 < 6"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the include tag") {
       val ickenham = new Ickenham(adapter)
       val tag = IncludeTag("comment")
@@ -270,9 +272,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "5"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the each include tag") {
       val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("each", "comments", Vector(
@@ -283,9 +282,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "79"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the root value tag") {
       val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("each", "comments", Vector(
@@ -296,9 +292,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "55"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the if include tag") {
       val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("if", "comments", Vector(
@@ -309,9 +302,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       val assembled = ickenham.assemble("test", templates)(sbs)(discussion)
       assembled shouldBe "5"
     }
-  }
-
-  describe("assemble") {
     it("should assemble the if else tag") {
       val ickenham = new Ickenham(adapter)
       val test = Vector(BlockTag("if", "missing", Vector(

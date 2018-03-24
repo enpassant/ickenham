@@ -8,9 +8,12 @@ import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
 import scala.util.Try
 
-class Ickenham[T](val adapter: Adapter[T]) {
-  type Templates = Map[String, Vector[Tag]]
+import Ickenham._
 
+class Ickenham[T](
+  val adapter: Adapter[T],
+  val helpers: Helpers = Map.empty[String, String => Option[Any]])
+{
   def compiles(templateNames: String*): Templates = {
     (templateNames map { templateName =>
       val template = loadFile(templateName + ".hbs")
@@ -124,6 +127,16 @@ class Ickenham[T](val adapter: Adapter[T]) {
       tag match {
         case TextTag(text) =>
           stream: Stream[_] => path: List[T] => stream.push(text)
+        case HelperTag(helperName, variableName) =>
+          val helper = helpers.get(helperName)
+          println(helper)
+
+          stream: Stream[_] => path: List[T] =>
+            val value = helper.flatMap(_(variableName))
+            println(value)
+            value foreach { v: Any =>
+              stream.push(v.toString)
+            }
         case ValueTag(variableName, needEscape) =>
           val names = getVariableNameList(variableName)
           stream: Stream[_] => path: List[T] =>
@@ -209,6 +222,11 @@ class Ickenham[T](val adapter: Adapter[T]) {
       case _ => adapter.asValue("Error")
     }
   }
+}
+
+object Ickenham {
+  type Templates = Map[String, Vector[Tag]]
+  type Helpers = Map[String, String => Option[Any]]
 
   def loadFile(fileName: String): String = {
     val resultTry = Try {
@@ -217,9 +235,6 @@ class Ickenham[T](val adapter: Adapter[T]) {
     }
     resultTry.getOrElse("")
   }
-}
-
-object Ickenham {
 }
 
 sealed trait Tag
