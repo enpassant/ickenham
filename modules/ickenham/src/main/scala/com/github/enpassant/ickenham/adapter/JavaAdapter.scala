@@ -1,6 +1,7 @@
 package com.github.enpassant.ickenham.adapter
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 class JavaAdapter extends Adapter[Any] {
   override def extractString(value: Any): String = value.toString
@@ -22,6 +23,13 @@ class JavaAdapter extends Adapter[Any] {
 
   override def getChild(value: Any, name: String): Option[Any] = value match {
     case map: java.util.Map[String, _] => map.asScala.get(name)
+    case obj: java.lang.Object =>
+      val methodOpt = Try(
+        obj.getClass.getMethod("get" + name.capitalize)
+      ).toOption
+      methodOpt map { method =>
+        method.invoke(obj)
+      }
     case _ => None
   }
 

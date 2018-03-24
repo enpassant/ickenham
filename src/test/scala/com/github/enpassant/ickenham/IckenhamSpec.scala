@@ -344,6 +344,16 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
   }
 
+  describe("getVariable with JavaAdapter") {
+    it("should get the name and age values") {
+      val ickenham = new Ickenham(adapterJava)
+      val json = new Person("Joe", 50)
+      val name = ickenham.getVariable("this/name", List(json))
+      val age = ickenham.getVariable("this/age", List(json))
+      (name, age) shouldBe ("Joe", 50)
+    }
+  }
+
   describe("getVariable") {
     it("should get the parent name and age values") {
       val ickenham = new Ickenham(adapter)

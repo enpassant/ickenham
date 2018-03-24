@@ -89,4 +89,9 @@ object DiscussonData {
       ).asJava
     ).asJava
   ).asJava
+
+  class Person(val name: String, val age: Int) {
+    def getName = name
+    def getAge = age
+  }
 }
