@@ -25,7 +25,7 @@ object IckenhamBench extends Bench.LocalTime {
       exec.maxWarmupRuns -> 5
     ) in {
       using(ranges) in {
-        _.map(i => new Ickenham(adapter).apply("comment")(discussion))
+        _.map(i => new Ickenham(adapter).compile("comment")(discussion))
       }
     }
   }

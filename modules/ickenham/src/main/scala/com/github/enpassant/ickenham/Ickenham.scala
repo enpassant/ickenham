@@ -1,18 +1,15 @@
 package com.github.enpassant.ickenham
 
 import com.github.enpassant.ickenham.adapter.Adapter
+import com.github.enpassant.ickenham.stream._
 
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
 import scala.util.Try
 
-class Ickenham[T](adapter: Adapter[T]) {
+class Ickenham[T](val adapter: Adapter[T]) {
   type Templates = Map[String, Vector[Tag]]
-
-  def apply(fileName: String): T => String = {
-    compile(fileName)
-  }
 
   def compiles(templateNames: String*): Templates = {
     (templateNames map { templateName =>
@@ -23,9 +20,14 @@ class Ickenham[T](adapter: Adapter[T]) {
   }
 
   def compile(template: String): T => String = {
+    val compiledFn = compileWithStream[String](template)
+    json => compiledFn(new StringBuilderStream())(json)
+  }
+
+  def compileWithStream[R](template: String): Stream[R] => T => R = {
     val templates = compiles(template)
-    val assembledFn = assemble(template, templates)
-    json => assembledFn(json)
+    val assembledFn = assemble[R](template, templates)
+    stream => json => assembledFn(stream)(json)
   }
 
   def parse(text: String): Vector[Tag] = {
@@ -98,70 +100,69 @@ class Ickenham[T](adapter: Adapter[T]) {
   private def csl(str: CharSequence) = str.toString.replaceAll("^\\s+", " ")
   private def csr(str: CharSequence) = str.toString.replaceAll("\\s+$", " ")
 
-  def assemble(template: String, templates: Templates): T => String = {
+  def assemble[R](template: String, templates: Templates):
+    Stream[R] => T => R =
+  {
     val tags = templates(template)
     val substitutedFn = substitute(tags, templates)
-    json => substitutedFn(List(json))
+    stream => json =>
+      substitutedFn(stream)(List(json))
+      stream.getResult
   }
 
   def substitute(tags: Vector[Tag], templates: Templates):
-    List[T] => String =
+    Stream[_] => List[T] => Unit =
   {
     val substituted = tags.map { tag =>
       tag match {
         case TextTag(text) =>
-          path: List[T] => text
+          stream: Stream[_] => path: List[T] => stream.push(text)
         case ValueTag(variableName, needEscape) =>
           val names = getVariableNameList(variableName)
-          path: List[T] =>
+          stream: Stream[_] => path: List[T] =>
             val value = getVariableLoop(names, path)
             val result = adapter.extractString(value)
-            if (needEscape) escape(result) else result
+            if (needEscape) {
+              stream.push(escape(result))
+            } else {
+              stream.push(result)
+            }
         case IncludeTag(templateName) =>
-          path => substitute(templates(templateName), templates)(path)
+          stream: Stream[_] => path =>
+            substitute(templates(templateName), templates)(stream)(path)
         case BlockTag("if", name, content, elseContent) =>
           val substitutedFn = substitute(content, templates)
           val substitutedElseFn = substitute(elseContent, templates)
           val names = getVariableNameList(name)
 
-          path: List[T] =>
+          stream: Stream[_] => path: List[T] =>
             if (adapter.isEmpty(getVariableLoop(names, path, true))) {
-              substitutedElseFn(path)
+              substitutedElseFn(stream)(path)
             } else {
-              substitutedFn(path)
+              substitutedFn(stream)(path)
             }
         case BlockTag("each", name, content, _) =>
           val substitutedFn = substitute(content, templates)
           val names = getVariableNameList(name)
 
-          path: List[T] =>
+          stream: Stream[_] => path: List[T] =>
             val children = adapter.getChildren(getVariableLoop(names, path))
-            val substitutedItems = children map { item =>
-              substitutedFn(item :: path)
+            children foreach { item =>
+              substitutedFn(stream)(item :: path)
             }
-            mkString(substitutedItems)
         case BlockTag(blockName, name, content, _) =>
-          path: List[T] => s"Block: $blockName"
+          stream: Stream[_] => path: List[T] => stream.push(s"Block: $blockName")
         case EndTag(blockName) =>
-          path: List[T] => "ERROR!"
+          stream: Stream[_] => path: List[T] => stream.push("ERROR!")
       }
     }
-    path: List[T] => mkString(substituted.map(_(path)))
+    stream: Stream[_] => path: List[T] => substituted.foreach(_(stream)(path))
   }
 
   def escape(string: String) = {
     string
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
-  }
-
-  def mkString(strings: Seq[String]) = {
-    val length = strings.foldLeft(0)(_ + _.length)
-    val sb = new java.lang.StringBuilder(length)
-    strings.foreach { str =>
-      sb.append(str)
-    }
-    sb.toString
   }
 
   def getVariableNameList(variableName: String): List[String] = {
