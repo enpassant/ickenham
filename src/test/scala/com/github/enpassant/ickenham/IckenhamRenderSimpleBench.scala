@@ -11,13 +11,13 @@ import fixiegrips.{ Json4sHelpers, Json4sResolver }
 import org.json4s.JsonAST._
 import org.scalameter.api._
 
-object IckenhamRenderBench extends Bench.LocalTime {
+object IckenhamRenderSimpleBench extends Bench.LocalTime {
   import DiscussonData._
 
-  def templateName = "comment"
+  def templateName = "commentSimple"
 
   val ranges = for {
-    size <- Gen.range("size")(200, 1000, 200)
+    size <- Gen.range("size")(2000, 10000, 2000)
   } yield 0 until size
 
   performance of "Ickenham" in {
