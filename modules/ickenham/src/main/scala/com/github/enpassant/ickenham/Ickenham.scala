@@ -68,13 +68,15 @@ class Ickenham[T](val adapter: Adapter[T]) {
     val valueTagRegex = """\{\{([_a-zA-Z0-9\.\/]+)\}\}"""
     val includeTagRegex = """\{\{>\s+([_a-zA-Z0-9\./]+)\}\}"""
     val blockTagRegex = """\{\{#(\w+)\s+([_a-zA-Z0-9\./]+)\}\}"""
+    val helperTagRegex = """\{\{(\w+) ([_a-zA-Z0-9\./]+)\}\}"""
     val regex = new Regex(
       elseTagRegex + "|" +
       endTagRegex + "|" +
       valueTagUnescapedRegex + "|" +
       valueTagRegex + "|" +
       includeTagRegex + "|" +
-      blockTagRegex
+      blockTagRegex + "|" +
+      helperTagRegex
     )
     val matchOpt = regex.findFirstMatchIn(text)
     matchOpt map { m =>
@@ -88,11 +90,16 @@ class Ickenham[T](val adapter: Adapter[T]) {
         NextTag(m.before.toString, ValueTag(m.group(4)), m.after.toString)
       } else if (Option(m.group(5)) != None) {
         NextTag(csr(m.before), IncludeTag(m.group(5)), csl(m.after))
-      } else {
+      } else if (Option(m.group(6)) != None) {
         val collected = collectTags(m.after.toString, Vector.empty[Tag])
         val blockTag =
           BlockTag(m.group(6), m.group(7), collected.tags, collected.elseTags)
         NextTag(csr(m.before), blockTag, collected.suffix)
+      } else {
+        NextTag(
+          m.before.toString,
+          HelperTag(m.group(8), m.group(9)),
+          m.after.toString)
       }
     }
   }
@@ -212,10 +219,14 @@ class Ickenham[T](val adapter: Adapter[T]) {
   }
 }
 
+object Ickenham {
+}
+
 sealed trait Tag
 case class TextTag(text: String) extends Tag
 case class ValueTag(variableName: String, escape: Boolean = true) extends Tag
 case class IncludeTag(templateName: String) extends Tag
+case class HelperTag(helperName: String, variableName: String) extends Tag
 case class BlockTag(
   blockName: String,
   name: String,

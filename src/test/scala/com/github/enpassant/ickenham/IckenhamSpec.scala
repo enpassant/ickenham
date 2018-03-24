@@ -199,6 +199,13 @@ class IckenhamSpec extends FunSpec with Matchers {
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe Some(NextTag("PREFIX ", ElseTag, " SUFFIX"))
     }
+    it("should find the next custom helper tag") {
+      val ickenham = new Ickenham(adapter)
+      val template = "PREFIX {{i18n ../commentId}} SUFFIX"
+      val nextTag = ickenham.searchNextTag(template)
+      nextTag shouldBe
+        Some(NextTag("PREFIX ", HelperTag("i18n", "../commentId"), " SUFFIX"))
+    }
   }
 
   describe("loadFile") {
