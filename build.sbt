@@ -12,6 +12,8 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 
 javaOptions += "-Xmx264m"
 
+coverageEnabled := true
+
 lazy val ickenham = (project in file("modules/ickenham"))
 
 lazy val json4s = (project in file("modules/adapters/json4s"))
