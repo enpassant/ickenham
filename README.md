@@ -56,8 +56,8 @@ Results in order (best to worst):
 3. _Pebble_: **30.000** req/s
 4. _Freemarker_: **29.000** req/s
 5. _JSP_: **27.000** req/s
-6. _Jtwig_: **25.000** req/s
-7. _**Ickenham**_ (Scala, Handlebars syntax): **23.000** req/s
+6. _**Ickenham**_ (Scala, Handlebars syntax): **26.500** req/s
+7. _Jtwig_: **25.000** req/s
 8. _Chunk_: **20.500** req/s
 9. _Thymeleaf_: **20.500** req/s
 10. _Handlebars_: **19.000** req/s
