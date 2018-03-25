@@ -1,4 +1,8 @@
 # Ickenham
+
+[![Build Status](https://travis-ci.org/enpassant/ickenham.svg?branch=master)](https://travis-ci.org/enpassant/ickenham)
+[![Coverage Status](https://img.shields.io/coveralls/enpassant/ickenham.svg)](https://img.shields.io/coveralls/enpassant/ickenham)
+
 Ickenham is fast and concise template system, largely compatible with [Handlebars](https://handlebarsjs.com/) and Mustache templates.
 
 Installation

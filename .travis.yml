@@ -17,6 +17,8 @@ scala:
 script:
    - sbt "test-only com.github.enpassant.ickenham.IckenhamSpec"
 
+after_success: "sbt ++$TRAVIS_SCALA_VERSION coveralls"
+
 before_cache:
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
