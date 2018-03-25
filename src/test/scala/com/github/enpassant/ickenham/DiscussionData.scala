@@ -12,7 +12,7 @@ import org.scalatest._
 object DiscussonData {
   val adapter = new Json4sAdapter()
 
-  val discussion = JObject(
+  val discussion = List(JObject(
     "_id" -> JString("5"),
     "escape" -> JString("5 < 6"),
     "comments" -> JArray(List(
@@ -36,11 +36,11 @@ object DiscussonData {
         "comments" -> JNothing
       )
     ))
-  )
+  ))
 
   val adapterPlain = new PlainAdapter()
 
-  val discussionPlain = Map(
+  val discussionPlain = List(Map(
     "_id" -> 5,
     "escape" -> "5 < 6",
     "comments" -> List(
@@ -62,11 +62,11 @@ object DiscussonData {
         "content" -> "<h1>Test comment 2</h1>"
       )
     )
-  )
+  ))
 
   val adapterJava = new JavaAdapter()
 
-  val discussionJava = Map(
+  val discussionJava = List(Map(
     "_id" -> 5,
     "escape" -> "5 < 6",
     "comments" -> List(
@@ -88,7 +88,7 @@ object DiscussonData {
         "content" -> "<h1>Test comment 2</h1>"
       ).asJava
     ).asJava
-  ).asJava
+  ).asJava)
 
   class Person(val name: String, val age: Int) {
     def getName = name

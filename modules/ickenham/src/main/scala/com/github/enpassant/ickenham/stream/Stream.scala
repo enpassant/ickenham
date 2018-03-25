@@ -17,11 +17,15 @@ class StringBuilderStream extends Stream[String] {
     sb.append(text)
   }
 
-  override def getResult(): String = sb.toString
+  override def getResult(): String = {
+    val result = sb.toString
+    sb.setLength(0)
+    result
+  }
 }
 
 class OutputStreamStream(val os: OutputStream) extends Stream[Unit] {
-  val writer = new BufferedWriter(new OutputStreamWriter(os))
+  val writer = new OutputStreamWriter(os)
 
   def push(text: String) = {
     writer.write(text)

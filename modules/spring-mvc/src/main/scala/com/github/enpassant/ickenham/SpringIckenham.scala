@@ -45,13 +45,11 @@ class SpringIckenham(
 
   val ickenham = new Ickenham(new JavaAdapter(), helpers, loadTemplate)
 
-  val templates =
-    ickenham.compiles("index-ickenham", "head", "presentation", "scripts")
-
-  val assembledFn = ickenham.assemble[Unit]("index-ickenham", templates)
+  val assembledFn = ickenham.compileWithStream[Unit]("index-ickenham")
 
   def render(json: Any, writer: Writer, locale: Locale) = {
     val stream = new WriterStream(writer)
-    assembledFn(stream)(json)
+    assembledFn(stream)(List(json))
+    stream.getResult
   }
 }

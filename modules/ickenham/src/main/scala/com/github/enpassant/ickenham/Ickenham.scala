@@ -9,6 +9,13 @@ import java.io.InputStreamReader
 
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
+
+import java.util.concurrent.ConcurrentHashMap
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.duration._
+
 import scala.util.matching.Regex
 import scala.util.Try
 
@@ -19,23 +26,34 @@ class Ickenham[T](
   val helpers: Helpers = Map.empty[String, String => Option[Any]],
   val loadTemplate: String => String = Ickenham.loadTemplate)
 {
-  def compiles(templateNames: String*): Templates = {
-    (templateNames map { templateName =>
-      val template = loadTemplate(templateName)
-      val tags = parse(template)
-      (templateName -> tags)
-    }).toMap
-  }
+  val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
 
-  def compile(template: String): T => String = {
+  def compile(template: String): List[T] => String = {
     val compiledFn = compileWithStream[String](template)
-    json => compiledFn(new StringBuilderStream())(json)
+    val sbs = new StringBuilderStream()
+    json => compiledFn(sbs)(json)
+    sbs.getResult()
   }
 
-  def compileWithStream[R](template: String): Stream[R] => T => R = {
-    val templates = compiles(template)
-    val assembledFn = assemble[R](template, templates)
-    stream => json => assembledFn(stream)(json)
+  def compileWithStream[R](templateName: String): Stream[R] => List[T] => Unit = {
+    val futureTemplate = if (templates.containsKey(templateName)) {
+      templates.get(templateName)
+    } else {
+      val promise = Promise[Template[_,T]]()
+      val future = promise.future
+      templates.put(templateName, future)
+      Future {
+        val template = loadTemplate(templateName)
+        val tags = parse(template)
+        promise success assemble[R](tags)
+          .asInstanceOf[Stream[R] => List[T] => Unit]
+      }
+      future
+    }
+    (stream: Stream[R]) => (path: List[T]) =>
+      val template = Await.result(futureTemplate, 5000.millis)
+        .asInstanceOf[Stream[R] => List[T] => R]
+      template(stream)(path)
   }
 
   def parse(text: String): Vector[Tag] = {
@@ -115,19 +133,13 @@ class Ickenham[T](
   private def csl(str: CharSequence) = str.toString.replaceAll("^\\s+", " ")
   private def csr(str: CharSequence) = str.toString.replaceAll("\\s+$", " ")
 
-  def assemble[R](template: String, templates: Templates):
-    Stream[R] => T => R =
-  {
-    val tags = templates(template)
-    val substitutedFn = substitute(tags, templates)
-    stream => json =>
-      substitutedFn(stream)(List(json))
-      stream.getResult
+  def assemble[R](tags: Vector[Tag]): Stream[R] => List[T] => Unit = {
+    val substitutedFn = substitute(tags)
+    stream => path =>
+      substitutedFn(stream)(path)
   }
 
-  def substitute(tags: Vector[Tag], templates: Templates):
-    Stream[_] => List[T] => Unit =
-  {
+  def substitute(tags: Vector[Tag]): Stream[_] => List[T] => Unit = {
     val substituted = tags.map { tag =>
       tag match {
         case TextTag(text) =>
@@ -151,11 +163,11 @@ class Ickenham[T](
               stream.push(result)
             }
         case IncludeTag(templateName) =>
-          stream: Stream[_] => path =>
-            substitute(templates(templateName), templates)(stream)(path)
+          compileWithStream(templateName)
+            .asInstanceOf[Stream[_] => List[T] => Unit]
         case BlockTag("if", name, content, elseContent) =>
-          val substitutedFn = substitute(content, templates)
-          val substitutedElseFn = substitute(elseContent, templates)
+          val substitutedFn = substitute(content)
+          val substitutedElseFn = substitute(elseContent)
           val names = getVariableNameList(name)
 
           stream: Stream[_] => path: List[T] =>
@@ -165,7 +177,7 @@ class Ickenham[T](
               substitutedFn(stream)(path)
             }
         case BlockTag("each", name, content, _) =>
-          val substitutedFn = substitute(content, templates)
+          val substitutedFn = substitute(content)
           val names = getVariableNameList(name)
 
           stream: Stream[_] => path: List[T] =>
@@ -229,6 +241,7 @@ class Ickenham[T](
 
 object Ickenham {
   type Templates = Map[String, Vector[Tag]]
+  type Template[R, T] = Stream[R] => List[T] => Unit
   type Helpers = Map[String, String => Option[Any]]
 
   def loadTemplate(name: String): String = loadFile(name + ".hbs")

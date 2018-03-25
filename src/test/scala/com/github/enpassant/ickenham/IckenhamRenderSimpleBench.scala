@@ -83,7 +83,7 @@ object IckenhamRenderSimpleBench extends Bench.LocalTime {
     ) in {
       using(ranges) in {
         _.map { i =>
-          render(comment)(discussion)
+          render(comment)(discussion.head)
         }
       }
     }
