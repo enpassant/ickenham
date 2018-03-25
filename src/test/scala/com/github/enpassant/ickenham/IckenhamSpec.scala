@@ -141,7 +141,7 @@ class IckenhamSpec extends FunSpec with Matchers {
             IncludeTag("comment"),
             TextTag(""" """))),
           TextTag(""" </div> """))),
-        TextTag(""" """))
+        TextTag(" "))
       tags shouldBe expectedTags
     }
   }

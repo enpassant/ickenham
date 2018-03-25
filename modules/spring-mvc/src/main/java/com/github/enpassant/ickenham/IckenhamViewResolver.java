@@ -1,6 +1,7 @@
 package com.github.enpassant.ickenham.springmvc;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.web.servlet.view.AbstractUrlBasedView;
 import org.springframework.web.servlet.view.AbstractTemplateViewResolver;
 
 public class IckenhamViewResolver
@@ -17,9 +18,5 @@ public class IckenhamViewResolver
      }
 
      public void afterPropertiesSet() throws Exception {
-         //getServletContext();
-         if (getSuffix() == null || getSuffix().length() == 0) {
-             super.setSuffix(".hbs");
-         }
      }
 }

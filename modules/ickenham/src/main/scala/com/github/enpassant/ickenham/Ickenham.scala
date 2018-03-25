@@ -3,6 +3,10 @@ package com.github.enpassant.ickenham
 import com.github.enpassant.ickenham.adapter.Adapter
 import com.github.enpassant.ickenham.stream._
 
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 import scala.util.matching.Regex
@@ -12,11 +16,12 @@ import Ickenham._
 
 class Ickenham[T](
   val adapter: Adapter[T],
-  val helpers: Helpers = Map.empty[String, String => Option[Any]])
+  val helpers: Helpers = Map.empty[String, String => Option[Any]],
+  val loadTemplate: String => String = Ickenham.loadTemplate)
 {
   def compiles(templateNames: String*): Templates = {
     (templateNames map { templateName =>
-      val template = loadFile(templateName + ".hbs")
+      val template = loadTemplate(templateName)
       val tags = parse(template)
       (templateName -> tags)
     }).toMap
@@ -226,12 +231,32 @@ object Ickenham {
   type Templates = Map[String, Vector[Tag]]
   type Helpers = Map[String, String => Option[Any]]
 
+  def loadTemplate(name: String): String = loadFile(name + ".hbs")
+
   def loadFile(fileName: String): String = {
     val resultTry = Try {
       new String(Files.readAllBytes(
         Paths.get(getClass.getResource("/" + fileName).getFile)), UTF_8)
     }
     resultTry.getOrElse("")
+  }
+
+  def loadFromInputStream(is: InputStream) = {
+    val reader = new BufferedReader(new InputStreamReader(is))
+    val sb = new StringBuilder()
+    try {
+      var notExit = true
+      do {
+        val line = reader.readLine()
+        notExit = Option(line) != None
+        if (notExit) {
+          sb.append(line).append("\n")
+        }
+      } while (notExit)
+    } finally {
+      reader.close()
+    }
+    sb.toString()
   }
 }
 

@@ -17,7 +17,7 @@ class JavaAdapter extends Adapter[Any] {
   }
 
   override def getChildren(value: Any): List[Any] = value match {
-    case ls: java.util.List[_] => ls.asScala.toList
+    case ls: java.util.Collection[_] => ls.asScala.toList
     case any => List()
   }
 
