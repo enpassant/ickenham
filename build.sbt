@@ -2,8 +2,6 @@ name := "root"
 
 organization := "com.github.enpassant"
 
-//scalaVersion := "2.12.4"
-
 scalaVersion := "2.11.12"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
