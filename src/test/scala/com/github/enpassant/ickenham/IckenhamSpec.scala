@@ -252,9 +252,14 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(tags)(sbs)(discussion)
       sbs.getResult shouldBe "5 < 6"
     }
-    /*
+
+    val loadTemplate = (name: String) => name match {
+      case "test" => "{{> comment}}"
+      case "comment" => "{{_id}}"
+    }
+
     it("should assemble the include tag") {
-      val ickenham = new Ickenham(adapter)
+      val ickenham = new Ickenham(adapter, loadTemplate=loadTemplate)
       val tag = IncludeTag("comment")
       val tagId = ValueTag("_id")
       val tags = Vector(tag)
@@ -262,8 +267,14 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(tags)(sbs)(discussion)
       sbs.getResult shouldBe "5"
     }
+
     it("should assemble the each include tag") {
-      val ickenham = new Ickenham(adapter)
+      val loadTemplateEach = (name: String) => name match {
+        case "test" => "{{> comment}}"
+        case "comment" => "{{commentId}}"
+      }
+
+      val ickenham = new Ickenham(adapter, loadTemplate=loadTemplateEach)
       val test = Vector(BlockTag("each", "comments", Vector(
         IncludeTag("comment"))))
       val comment = Vector(ValueTag("commentId"))
@@ -271,8 +282,9 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(test)(sbs)(discussion)
       sbs.getResult shouldBe "79"
     }
+
     it("should assemble the root value tag") {
-      val ickenham = new Ickenham(adapter)
+      val ickenham = new Ickenham(adapter, loadTemplate=loadTemplate)
       val test = Vector(BlockTag("each", "comments", Vector(
         IncludeTag("comment"))))
       val comment = Vector(ValueTag("._id"))
@@ -280,8 +292,9 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(test)(sbs)(discussion)
       sbs.getResult shouldBe "55"
     }
+
     it("should assemble the if include tag") {
-      val ickenham = new Ickenham(adapter)
+      val ickenham = new Ickenham(adapter, loadTemplate=loadTemplate)
       val test = Vector(BlockTag("if", "comments", Vector(
         IncludeTag("comment"))))
       val comment = Vector(ValueTag("_id"))
@@ -289,8 +302,9 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(test)(sbs)(discussion)
       sbs.getResult shouldBe "5"
     }
+
     it("should assemble the if else tag") {
-      val ickenham = new Ickenham(adapter)
+      val ickenham = new Ickenham(adapter, loadTemplate=loadTemplate)
       val test = Vector(BlockTag("if", "missing", Vector(
         IncludeTag("comment")), Vector(TextTag("Missing"))))
       val comment = Vector(ValueTag("_id"))
@@ -298,7 +312,6 @@ class IckenhamSpec extends FunSpec with Matchers {
       ickenham.assemble(test)(sbs)(discussion)
       sbs.getResult shouldBe "Missing"
     }
-    */
   }
 
   describe("getVariable") {
