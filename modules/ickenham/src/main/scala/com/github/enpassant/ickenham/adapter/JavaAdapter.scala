@@ -22,7 +22,7 @@ class JavaAdapter extends Adapter[Any] {
   }
 
   override def getChild(value: Any, name: String): Option[Any] = value match {
-    case map: java.util.Map[String, _] => map.asScala.get(name)
+    case map: java.util.Map[String, _] @unchecked => map.asScala.get(name)
     case obj: java.lang.Object =>
       val methodOpt = Try(
         obj.getClass.getMethod("get" + name.capitalize)

@@ -187,7 +187,7 @@ class Ickenham[T](
             }
         case BlockTag(blockName, name, content, _) =>
           stream: Stream[_] => path: List[T] => stream.push(s"Block: $blockName")
-        case EndTag(blockName) =>
+        case _ =>
           stream: Stream[_] => path: List[T] => stream.push("ERROR!")
       }
     }

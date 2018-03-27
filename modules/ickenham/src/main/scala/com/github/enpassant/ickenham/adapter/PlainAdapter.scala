@@ -20,7 +20,7 @@ class PlainAdapter extends Adapter[Any] {
   }
 
   override def getChild(value: Any, name: String): Option[Any] = value match {
-    case map: Map[Any, Any] => map.get(name)
+    case map: Map[String, _] @unchecked => map.get(name)
     case obj: AnyRef =>
       val methodOpt = Try(
         obj.getClass.getMethod(name)

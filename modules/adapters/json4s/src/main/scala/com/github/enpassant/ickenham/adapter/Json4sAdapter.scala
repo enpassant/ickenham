@@ -17,7 +17,7 @@ class Json4sAdapter extends Adapter[JValue] {
     case JLong(0L) => true
     case JInt(value) if value == BigInt(0) => true
     case JDecimal(value) if value == BigDecimal(0) => true
-    case JBool(false) => true
+    case JBool(value) if !value => true
     case JNothing => true
     case JNull => true
     case _ => false
