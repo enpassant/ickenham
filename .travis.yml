@@ -15,7 +15,7 @@ scala:
    - 2.11.12
 
 script:
-   - sbt "test-only com.github.enpassant.ickenham.IckenhamSpec"
+   - sbt test
 
 after_success: "sbt ++$TRAVIS_SCALA_VERSION coveralls"
 
