@@ -92,7 +92,7 @@ class Ickenham[T](
     val endTagRegex = """\{\{\/(\w+)\}\}"""
     val valueTagUnescapedRegex = """\{\{\{([_a-zA-Z0-9\.\/]+)\}\}\}"""
     val valueTagRegex = """\{\{([_a-zA-Z0-9\.\/]+)\}\}"""
-    val includeTagRegex = """\{\{>\s+([_a-zA-Z0-9\./]+)\}\}"""
+    val includeTagRegex = """\{\{>\s*([_a-zA-Z0-9\./]+)\}\}"""
     val blockTagRegex = """\{\{#(\w+)\s+([_a-zA-Z0-9\./]+)\}\}"""
     val helperTagRegex = """\{\{(\w+) ([^}]+)\}\}"""
     val regex = new Regex(

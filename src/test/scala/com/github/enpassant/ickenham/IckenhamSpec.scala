@@ -273,7 +273,7 @@ class IckenhamSpec extends FunSpec with Matchers {
 
     it("should assemble the each include tag") {
       val loadTemplateEach = (name: String) => name match {
-        case "test" => "{{> comment}}"
+        case "test" => "{{>comment}}"
         case "comment" => "{{commentId}}"
       }
 
