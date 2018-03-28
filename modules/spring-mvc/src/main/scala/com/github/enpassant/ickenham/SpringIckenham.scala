@@ -27,7 +27,8 @@ class SpringIckenham(
   val logger = LoggerFactory.getLogger(classOf[IckenhamView])
 
   val parts = url.split("/")
-  val template = parts.last
+  val templateFile = parts.last
+  val template = templateFile.split("\\.").head
   val prefix = parts.dropRight(1).mkString("/")
 
   val i18nHelper = (params: List[String]) => {
@@ -45,7 +46,7 @@ class SpringIckenham(
 
   val ickenham = new Ickenham(new JavaAdapter(), helpers, loadTemplate)
 
-  val assembledFn = ickenham.compileWithStream[Unit]("index-ickenham")
+  val assembledFn = ickenham.compileWithStream[Unit](template)
 
   def render(json: Any, writer: Writer, locale: Locale) = {
     val stream = new WriterStream(writer)
