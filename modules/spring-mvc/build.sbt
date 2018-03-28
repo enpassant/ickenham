@@ -2,7 +2,7 @@ name := "ickenham-spring-mvc"
 
 organization := "com.github.enpassant"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0"
 
 scalaVersion := "2.11.11"
 
@@ -49,7 +49,7 @@ pomExtra := (
   </scm>
   <developers>
     <developer>
-      <id>fkalman</id>
+      <id>enpassant</id>
       <name>Enpassant</name>
       <url>http://github.com/enpassant</url>
     </developer>
