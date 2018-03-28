@@ -23,7 +23,7 @@ import Ickenham._
 
 class Ickenham[T](
   val adapter: Adapter[T],
-  val helpers: Helpers = Map.empty[String, String => Option[Any]],
+  val helpers: Helpers = Map(),
   val loadTemplate: String => String = Ickenham.loadTemplate)
 {
   val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
@@ -94,7 +94,7 @@ class Ickenham[T](
     val valueTagRegex = """\{\{([_a-zA-Z0-9\.\/]+)\}\}"""
     val includeTagRegex = """\{\{>\s+([_a-zA-Z0-9\./]+)\}\}"""
     val blockTagRegex = """\{\{#(\w+)\s+([_a-zA-Z0-9\./]+)\}\}"""
-    val helperTagRegex = """\{\{(\w+) ([_a-zA-Z0-9\./]+)\}\}"""
+    val helperTagRegex = """\{\{(\w+) ([^}]+)\}\}"""
     val regex = new Regex(
       elseTagRegex + "|" +
       endTagRegex + "|" +
@@ -124,10 +124,34 @@ class Ickenham[T](
       } else {
         NextTag(
           m.before.toString,
-          HelperTag(m.group(8), m.group(9)),
+          HelperTag(m.group(8), parseParameters(m.group(9))),
           m.after.toString)
       }
     }
+  }
+
+  private def parseParameters(str: String) = {
+    def loop(param: String, pos: Int, params: List[String]): List[String] = {
+      if (pos >= str.length) {
+        params
+      } else if (param.length == 0 && str(pos) == ' ') {
+        loop(param, pos+1, params)
+      } else if (param.length == 0) {
+        loop(str(pos).toString, pos+1, params)
+      } else if (param(0) == '"' && str(pos) == ' ') {
+        loop(param + ' ', pos+1, params)
+      } else if (param(0) == '"' && str(pos) == '\\' && str(pos+1) == '"') {
+        loop(param + '"', pos+2, params)
+      } else if (param(0) == '"' && str(pos) == '"') {
+        loop("", pos+1, params :+ param.tail)
+      } else if (param(0) == '"') {
+        loop(param + str(pos), pos+1, params)
+      } else if (str(pos) == ' ') {
+        loop("", pos+1, params :+ param)
+      } else loop(param + str(pos), pos+1, params)
+    }
+
+    loop("", 0, Nil)
   }
 
   private def csl(str: CharSequence) = str.toString.replaceAll("^\\s+", " ")
@@ -144,11 +168,11 @@ class Ickenham[T](
       tag match {
         case TextTag(text) =>
           stream: Stream[_] => path: List[T] => stream.push(text)
-        case HelperTag(helperName, variableName) =>
+        case HelperTag(helperName, parameters) =>
           val helper = helpers.get(helperName)
 
           stream: Stream[_] => path: List[T] =>
-            val value = helper.flatMap(_(variableName))
+            val value = helper.flatMap(_(parameters))
             value foreach { v: Any =>
               stream.push(v.toString)
             }
@@ -242,7 +266,7 @@ class Ickenham[T](
 object Ickenham {
   type Templates = Map[String, Vector[Tag]]
   type Template[R, T] = Stream[R] => List[T] => Unit
-  type Helpers = Map[String, String => Option[Any]]
+  type Helpers = Map[String, List[String] => Option[Any]]
 
   def loadTemplate(name: String): String = loadFile(name + ".hbs")
 
@@ -277,7 +301,7 @@ sealed trait Tag
 case class TextTag(text: String) extends Tag
 case class ValueTag(variableName: String, escape: Boolean = true) extends Tag
 case class IncludeTag(templateName: String) extends Tag
-case class HelperTag(helperName: String, variableName: String) extends Tag
+case class HelperTag(helperName: String, parameters: List[String]) extends Tag
 case class BlockTag(
   blockName: String,
   name: String,

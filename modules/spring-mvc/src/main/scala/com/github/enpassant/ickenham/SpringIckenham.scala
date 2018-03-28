@@ -30,10 +30,10 @@ class SpringIckenham(
   val template = parts.last
   val prefix = parts.dropRight(1).mkString("/")
 
-  val i18nHelper = (code: String) => {
+  val i18nHelper = (params: List[String]) => {
     val locale = LocaleContextHolder.getLocale()
-    Try(applicationContext.getMessage(code, null, locale))
-      .toOption.orElse(Some(code))
+    Try(applicationContext.getMessage(params.head, params.tail.toArray, locale))
+      .toOption.orElse(Some(params))
   }
 
   val helpers: Helpers = Map("i18n" -> i18nHelper)

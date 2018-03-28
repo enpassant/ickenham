@@ -191,10 +191,13 @@ class IckenhamSpec extends FunSpec with Matchers {
     }
     it("should find the next custom helper tag") {
       val ickenham = new Ickenham(adapter)
-      val template = "PREFIX {{i18n ../commentId}} SUFFIX"
+      val template =
+        "PREFIX {{i18n \"../commentId\" second \"third parameter\"}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
-        Some(NextTag("PREFIX ", HelperTag("i18n", "../commentId"), " SUFFIX"))
+        Some(NextTag("PREFIX ", HelperTag(
+          "i18n",
+          List("../commentId", "second", "third parameter")), " SUFFIX"))
     }
   }
 
@@ -224,12 +227,12 @@ class IckenhamSpec extends FunSpec with Matchers {
       sbs.getResult shouldBe "Sample Text"
     }
     it("should assemble the helper tag") {
-      val i18nHelper = Map("example.title" -> "Example title")
+      val i18nHelper = Map(List("example.title") -> "Example title")
       val ickenham = new Ickenham(adapterPlain, Map("i18n" -> i18nHelper.get))
       val textTag = TextTag("-")
-      val tag = HelperTag("i18n", "example.title")
-      val tagMissing = HelperTag("i18n", "example.value")
-      val helperMissing = HelperTag("capitalize", "example.title")
+      val tag = HelperTag("i18n", List("example.title"))
+      val tagMissing = HelperTag("i18n", List("example.value"))
+      val helperMissing = HelperTag("capitalize", List("example.title"))
       val tags = Vector(tag, textTag, tagMissing, textTag, helperMissing)
       val json = Map()
       val sbs = new StringBuilderStream()
