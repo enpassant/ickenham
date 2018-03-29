@@ -46,7 +46,7 @@ object IckenhamRenderSimpleBench extends Bench.LocalTime {
     ) in {
       using(ranges) in {
         _.map { i =>
-          templates(discussionPlain)
+          templates(discussionPlain.head)
         }
       }
     }
@@ -62,7 +62,7 @@ object IckenhamRenderSimpleBench extends Bench.LocalTime {
     ) in {
       using(ranges) in {
         _.map { i =>
-          templates(discussionJava)
+          templates(discussionJava.head)
         }
       }
     }

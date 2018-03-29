@@ -45,7 +45,7 @@ object IckenhamBench extends Bench.LocalTime {
           val render = (template: Template) => (obj: Object) => template(ctx(obj))
 
           val comment = handlebars.compile("comment")
-          render(comment)(discussion)
+          render(comment)(discussion.head)
         }
       }
     }
