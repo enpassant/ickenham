@@ -16,7 +16,7 @@ class IckenhamSpec extends FunSpec with Matchers {
   describe("compile with PlainAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterPlain)
-      val resultHtml = ickenham.compile("comment")(discussionPlain)
+      val resultHtml = ickenham.compile("comment")(discussionPlain.head)
       val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
@@ -53,7 +53,7 @@ class IckenhamSpec extends FunSpec with Matchers {
   describe("compile with JavaAdapter") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapterJava)
-      val resultHtml = ickenham.compile("comment")(discussionJava)
+      val resultHtml = ickenham.compile("comment")(discussionJava.head)
       val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
@@ -63,7 +63,7 @@ class IckenhamSpec extends FunSpec with Matchers {
   describe("compile") {
     it("should create the expected html") {
       val ickenham = new Ickenham(adapter)
-      val resultHtml = ickenham.compile("comment")(discussion)
+      val resultHtml = ickenham.compile("comment")(discussion.head)
       val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")

@@ -26,13 +26,16 @@ class Ickenham[T](
   val helpers: Helpers = Map(),
   val loadTemplate: String => String = Ickenham.loadTemplate)
 {
+  def this(adapter: Adapter[T]) = this(adapter, Map(), Ickenham.loadTemplate)
+
   val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
 
-  def compile(template: String): List[T] => String = {
+  def compile(template: String): T => String = {
     val compiledFn = compileWithStream[String](template)
     val sbs = new StringBuilderStream()
-    json => compiledFn(sbs)(json)
-    sbs.getResult()
+    json =>
+      compiledFn(sbs)(List(json))
+      sbs.getResult()
   }
 
   def compileWithStream[R](templateName: String): Stream[R] => List[T] => Unit = {
