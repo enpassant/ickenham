@@ -192,12 +192,16 @@ class IckenhamSpec extends FunSpec with Matchers {
     it("should find the next custom helper tag") {
       val ickenham = new Ickenham(adapter)
       val template =
-        "PREFIX {{i18n \"../commentId\" second \"third parameter\"}} SUFFIX"
+        "PREFIX {{i18n \"../commentId\" _id \"third parameter\"}} SUFFIX"
       val nextTag = ickenham.searchNextTag(template)
       nextTag shouldBe
         Some(NextTag("PREFIX ", HelperTag(
           "i18n",
-          List("../commentId", "second", "third parameter")), " SUFFIX"))
+          List(
+            TextParam("../commentId"),
+            VariableParam("_id"),
+            TextParam("third parameter"))),
+        " SUFFIX"))
     }
   }
 
@@ -227,17 +231,22 @@ class IckenhamSpec extends FunSpec with Matchers {
       sbs.getResult shouldBe "Sample Text"
     }
     it("should assemble the helper tag") {
-      val i18nHelper = Map(List("example.title") -> "Example title")
-      val ickenham = new Ickenham(adapterPlain, Map("i18n" -> i18nHelper.get))
+      val i18nMap = Map("example.title" -> "Example title %1s")
+      val i18nHelper = (ls: List[Any]) => i18nMap.get(ls.head.toString).map {
+        _.format(ls.tail :_*)
+      }
+      val ickenham = new Ickenham(adapterPlain, Map("i18n" -> i18nHelper))
       val textTag = TextTag("-")
-      val tag = HelperTag("i18n", List("example.title"))
-      val tagMissing = HelperTag("i18n", List("example.value"))
-      val helperMissing = HelperTag("capitalize", List("example.title"))
+      val tag = HelperTag("i18n", List(
+        TextParam("example.title"),
+        VariableParam("_id")))
+      val tagMissing = HelperTag("i18n", List(TextParam("example.value")))
+      val helperMissing =
+        HelperTag("capitalize", List(TextParam("example.title")))
       val tags = Vector(tag, textTag, tagMissing, textTag, helperMissing)
-      val json = Map()
       val sbs = new StringBuilderStream()
-      ickenham.assemble(tags)(sbs)(discussion)
-      sbs.getResult shouldBe ("Example title--")
+      ickenham.assemble(tags)(sbs)(discussionPlain)
+      sbs.getResult shouldBe ("Example title 5--")
     }
     it("should assemble the escaped value tag") {
       val ickenham = new Ickenham(adapter)

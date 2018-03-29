@@ -23,10 +23,11 @@ import Ickenham._
 
 class Ickenham[T](
   val adapter: Adapter[T],
-  val helpers: Helpers = Map(),
+  val helpers: Helpers[T] = emptyHelpers,
   val loadTemplate: String => String = Ickenham.loadTemplate)
 {
-  def this(adapter: Adapter[T]) = this(adapter, Map(), Ickenham.loadTemplate)
+  def this(adapter: Adapter[T]) =
+    this(adapter, emptyHelpers, Ickenham.loadTemplate)
 
   val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
 
@@ -134,7 +135,7 @@ class Ickenham[T](
   }
 
   private def parseParameters(str: String) = {
-    def loop(param: String, pos: Int, params: List[String]): List[String] = {
+    def loop(param: String, pos: Int, params: List[Param]): List[Param] = {
       if (pos >= str.length) {
         params
       } else if (param.length == 0 && str(pos) == ' ') {
@@ -146,11 +147,11 @@ class Ickenham[T](
       } else if (param(0) == '"' && str(pos) == '\\' && str(pos+1) == '"') {
         loop(param + '"', pos+2, params)
       } else if (param(0) == '"' && str(pos) == '"') {
-        loop("", pos+1, params :+ param.tail)
+        loop("", pos+1, params :+ TextParam(param.tail))
       } else if (param(0) == '"') {
         loop(param + str(pos), pos+1, params)
       } else if (str(pos) == ' ') {
-        loop("", pos+1, params :+ param)
+        loop("", pos+1, params :+ VariableParam(param))
       } else loop(param + str(pos), pos+1, params)
     }
 
@@ -173,9 +174,20 @@ class Ickenham[T](
           stream: Stream[_] => path: List[T] => stream.push(text)
         case HelperTag(helperName, parameters) =>
           val helper = helpers.get(helperName)
+          val params = parameters.map {
+            case VariableParam(name) =>
+              val names = getVariableNameList(name)
+              VariableNameListParam(names)
+            case param => param
+          }
 
           stream: Stream[_] => path: List[T] =>
-            val value = helper.flatMap(_(parameters))
+            val resolvedParams = params.map {
+              case VariableNameListParam(names) => getVariableLoop(names, path)
+              case TextParam(value) => adapter.asValue(value)
+            }
+
+            val value = helper.flatMap(_(resolvedParams))
             value foreach { v: Any =>
               stream.push(v.toString)
             }
@@ -269,7 +281,9 @@ class Ickenham[T](
 object Ickenham {
   type Templates = Map[String, Vector[Tag]]
   type Template[R, T] = Stream[R] => List[T] => Unit
-  type Helpers = Map[String, List[String] => Option[Any]]
+  type Helpers[T] = Map[String, List[T] => Option[Any]]
+
+  def emptyHelpers[T] = Map.empty[String, List[T] => Option[Any]]
 
   def loadTemplate(name: String): String = loadFile(name + ".hbs")
 
@@ -304,7 +318,7 @@ sealed trait Tag
 case class TextTag(text: String) extends Tag
 case class ValueTag(variableName: String, escape: Boolean = true) extends Tag
 case class IncludeTag(templateName: String) extends Tag
-case class HelperTag(helperName: String, parameters: List[String]) extends Tag
+case class HelperTag(helperName: String, parameters: List[Param]) extends Tag
 case class BlockTag(
   blockName: String,
   name: String,
@@ -320,3 +334,8 @@ case class CollectedTags(
   tags: Vector[Tag] = Vector.empty[Tag],
   elseTags: Vector[Tag] = Vector.empty[Tag]
 )
+
+sealed trait Param
+case class TextParam(value: String) extends Param
+case class VariableParam(name: String) extends Param
+case class VariableNameListParam(names: List[String]) extends Param
