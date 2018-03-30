@@ -31,13 +31,15 @@ class SpringIckenham(
   val template = templateFile.split("\\.").head
   val prefix = parts.dropRight(1).mkString("/")
 
-  val i18nHelper = (params: List[String]) => {
+  val i18nHelper = (params: List[Any]) => {
     val locale = LocaleContextHolder.getLocale()
-    Try(applicationContext.getMessage(params.head, params.tail.toArray, locale))
+    val key = params.head.toString
+    val args = params.tail.toArray.asInstanceOf[Array[Object]]
+    Try(applicationContext.getMessage(key, args, locale))
       .toOption.orElse(Some(params))
   }
 
-  val helpers: Helpers = Map("i18n" -> i18nHelper)
+  val helpers: Helpers[Any] = Map("i18n" -> i18nHelper)
 
   val loadTemplate = (name: String) => {
     Ickenham.loadFromInputStream(

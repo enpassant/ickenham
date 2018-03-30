@@ -1,26 +1,98 @@
-name := "root"
+import sbtcrossproject.{crossProject, CrossType}
 
-organization := "com.github.enpassant"
+lazy val commonSettings = Seq(
+  version := "1.3.0-SNAPSHOT",
+  organization := "com.github.enpassant",
+  scalaVersion := "2.11.12",
+  crossScalaVersions := Seq("2.11.12", "2.12.4"),
+  scalacOptions ++= Seq("-feature", "-deprecation"),
+  javaOptions += "-Xmx264m"
+)
 
-scalaVersion := "2.11.12"
+lazy val publisSettings = Seq(
+  publishMavenStyle := true,
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+  },
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => false },
+  pomExtra := (
+    <url>http://github.com/enpassant/ickenham</url>
+    <licenses>
+      <license>
+        <name>Apache-style</name>
+        <url>http://opensource.org/licenses/Apache-2.0</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com:enpassant/ickenham.git</url>
+      <connection>scm:git:git@github.com:enpassant/ickenham.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>enpassant</id>
+        <name>Enpassant</name>
+        <url>http://github.com/enpassant</url>
+      </developer>
+    </developers>)
+)
 
-scalacOptions ++= Seq("-feature", "-deprecation")
+lazy val ickenham =
+  crossProject(JVMPlatform, NativePlatform)
+    .withoutSuffixFor(JVMPlatform)
+    .crossType(CrossType.Pure)
+    .in(file("modules/ickenham"))
+    .settings(
+      commonSettings,
+      publisSettings,
+      name := "ickenham",
+      version := "1.3.0-SNAPSHOT"
+    )
+    .jvmSettings()
+    .nativeSettings()
 
-javaOptions += "-Xmx264m"
+lazy val ickenhamJVM = ickenham.jvm
+lazy val ickenhamNative = ickenham.native
 
-coverageEnabled := true
+lazy val json4s = project
+  .in(file("modules/adapters/json4s"))
+  .settings(
+    commonSettings,
+    publisSettings,
+    name := "ickenham-json4s",
+    version := "1.0.0-SNAPSHOT",
+    libraryDependencies ++= Seq(
+      "org.json4s" %% "json4s-jackson" % "3.5.3"
+    )
+  )
+  .dependsOn(ickenhamJVM)
 
-lazy val ickenham = (project in file("modules/ickenham"))
-
-lazy val json4s = (project in file("modules/adapters/json4s"))
-  .dependsOn(ickenham)
-
-lazy val springmvc = (project in file("modules/spring-mvc"))
-  .dependsOn(ickenham)
+lazy val springmvc = project
+  .in(file("modules/spring-mvc"))
+  .settings(
+    commonSettings,
+    publisSettings,
+    name := "ickenham-spring-mvc",
+    version := "1.1.0-SNAPSHOT",
+    libraryDependencies ++= Seq(
+      "org.springframework" % "spring-webmvc" % "3.0.6.RELEASE",
+      "javax.servlet" % "servlet-api" % "2.5" % "provided",
+      "commons-logging" % "commons-logging-api" % "1.1" % "provided",
+      "log4j" % "log4j" % "1.2.16" % "provided",
+      "org.slf4j" % "slf4j-api" % "1.6.2" % "provided"
+    )
+  )
+  .dependsOn(ickenhamJVM)
 
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .settings(
+    commonSettings,
     Defaults.itSettings,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.4" % "it,test",
@@ -31,5 +103,5 @@ lazy val root = (project in file("."))
     ),
     testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
   )
-  .aggregate(ickenham)
+  .aggregate(ickenhamJVM)
   .dependsOn(json4s)
