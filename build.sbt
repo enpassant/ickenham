@@ -51,7 +51,7 @@ lazy val ickenham =
       commonSettings,
       publisSettings,
       name := "ickenham",
-      version := "1.3.0-SNAPSHOT"
+      version := "1.3.0"
     )
     .jvmSettings()
     .nativeSettings()
@@ -65,7 +65,7 @@ lazy val json4s = project
     commonSettings,
     publisSettings,
     name := "ickenham-json4s",
-    version := "1.0.0-SNAPSHOT",
+    version := "1.3.0",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-jackson" % "3.5.3"
     )
@@ -78,7 +78,7 @@ lazy val springmvc = project
     commonSettings,
     publisSettings,
     name := "ickenham-spring-mvc",
-    version := "1.1.0-SNAPSHOT",
+    version := "1.3.0",
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-webmvc" % "3.0.6.RELEASE",
       "javax.servlet" % "servlet-api" % "2.5" % "provided",
