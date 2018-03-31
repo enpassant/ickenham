@@ -36,6 +36,22 @@ object IckenhamRenderBench extends Bench.LocalTime {
     }
   }
 
+  performance of "Ickenham with PlainAdapter and case classes" in {
+    val templates = new Ickenham(adapterPlain).compile(templateName)
+
+    measure method "render" config (
+      exec.benchRuns -> 5,
+      exec.minWarmupRuns -> 2,
+      exec.maxWarmupRuns -> 5
+    ) in {
+      using(ranges) in {
+        _.map { i =>
+          templates(discussionCaseClass)
+        }
+      }
+    }
+  }
+
   performance of "Ickenham with PlainAdapter" in {
     val templates = new Ickenham(adapterPlain).compile(templateName)
 

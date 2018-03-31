@@ -64,6 +64,21 @@ object DiscussonData {
     )
   ))
 
+  case class Discussion(_id: Int, escape: String, comments: List[Comment])
+
+  case class Comment(
+    commentId: Int,
+    userName: String,
+    content: String,
+    comments: List[Comment] = List())
+
+  val discussionCaseClass = Discussion(5, "5 < 6", List(
+    Comment(7, "John", "<h1>Test comment 1</h1>",List(
+      Comment(8, "Susan", "<h2>Reply</h2>")
+    )),
+    Comment(9, "George", "<h1>Test comment 2</h1>")
+  ))
+
   val adapterJava = new JavaAdapter()
 
   val discussionJava = List(Map(
