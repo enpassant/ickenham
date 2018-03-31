@@ -9,7 +9,7 @@ lazy val commonSettings = Seq(
   javaOptions += "-Xmx264m"
 )
 
-lazy val publisSettings = Seq(
+lazy val publishSettings = Seq(
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
@@ -49,7 +49,7 @@ lazy val ickenham =
     .in(file("modules/ickenham"))
     .settings(
       commonSettings,
-      publisSettings,
+      publishSettings,
       name := "ickenham"
     )
     .jvmSettings()
@@ -62,7 +62,7 @@ lazy val json4s = project
   .in(file("modules/adapters/json4s"))
   .settings(
     commonSettings,
-    publisSettings,
+    publishSettings,
     name := "ickenham-json4s",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-jackson" % "3.5.3"
@@ -74,7 +74,7 @@ lazy val springmvc = project
   .in(file("modules/spring-mvc"))
   .settings(
     commonSettings,
-    publisSettings,
+    publishSettings,
     name := "ickenham-spring-mvc",
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-webmvc" % "3.0.6.RELEASE",
@@ -98,7 +98,10 @@ lazy val root = (project in file("."))
       "me.lessis" %% "fixie-grips-json4s" % "0.1.0" % "it,test",
       "org.json4s" %% "json4s-jackson" % "3.5.3" % "it,test"
     ),
+    publish := {},
     testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
   )
+  .aggregate(json4s)
+  .aggregate(springmvc)
   .aggregate(ickenhamJVM)
   .dependsOn(json4s)
