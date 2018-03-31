@@ -1,7 +1,7 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 lazy val commonSettings = Seq(
-  version := "1.3.0-SNAPSHOT",
+  version := "1.4.0-SNAPSHOT",
   organization := "com.github.enpassant",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.4"),
@@ -50,8 +50,7 @@ lazy val ickenham =
     .settings(
       commonSettings,
       publisSettings,
-      name := "ickenham",
-      version := "1.3.0"
+      name := "ickenham"
     )
     .jvmSettings()
     .nativeSettings()
@@ -65,7 +64,6 @@ lazy val json4s = project
     commonSettings,
     publisSettings,
     name := "ickenham-json4s",
-    version := "1.3.0",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-jackson" % "3.5.3"
     )
@@ -78,7 +76,6 @@ lazy val springmvc = project
     commonSettings,
     publisSettings,
     name := "ickenham-spring-mvc",
-    version := "1.3.0",
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-webmvc" % "3.0.6.RELEASE",
       "javax.servlet" % "servlet-api" % "2.5" % "provided",

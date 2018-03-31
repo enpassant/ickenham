@@ -10,7 +10,8 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 
-import java.util.concurrent.ConcurrentHashMap
+//import java.util.concurrent.ConcurrentHashMap
+import java.util.LinkedHashMap
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future, Promise}
@@ -29,7 +30,8 @@ class Ickenham[T](
   def this(adapter: Adapter[T]) =
     this(adapter, emptyHelpers, Ickenham.loadTemplate)
 
-  val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
+  //val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
+  val templates = new LinkedHashMap[String, Option[Template[_,T]]]()
 
   def compile(template: String): T => String = {
     val compiledFn = compileWithStream[String](template)
@@ -40,22 +42,21 @@ class Ickenham[T](
   }
 
   def compileWithStream[R](templateName: String): Stream[R] => List[T] => Unit = {
-    val futureTemplate = if (templates.containsKey(templateName)) {
-      templates.get(templateName)
-    } else {
-      val promise = Promise[Template[_,T]]()
-      val future = promise.future
-      templates.put(templateName, future)
-      Future {
-        val template = loadTemplate(templateName)
-        val tags = parse(template)
-        promise success assemble[R](tags)
-          .asInstanceOf[Stream[R] => List[T] => Unit]
+    if (!templates.containsKey(templateName)) {
+      templates.synchronized {
+        templates.put(templateName, None)
       }
-      future
+      val template = loadTemplate(templateName)
+      val tags = parse(template)
+      val assembledFn = assemble[R](tags)
+        .asInstanceOf[Stream[R] => List[T] => Unit]
+      templates.synchronized {
+        templates.put(templateName, Some(assembledFn))
+      }
+      assembledFn
     }
     (stream: Stream[R]) => (path: List[T]) =>
-      val template = Await.result(futureTemplate, 5000.millis)
+      val template = templates.get(templateName).get
         .asInstanceOf[Stream[R] => List[T] => R]
       template(stream)(path)
   }
@@ -110,17 +111,17 @@ class Ickenham[T](
     )
     val matchOpt = regex.findFirstMatchIn(text)
     matchOpt map { m =>
-      if (Option(m.group(1)) != None) {
+      if (Option(m.group(1)) != None && m.group(1) != "") {
         NextTag(csr(m.before), ElseTag, csl(m.after))
-      } else if (Option(m.group(2)) != None) {
+      } else if (Option(m.group(2)) != None && m.group(2) != "") {
         NextTag(csr(m.before), EndTag(m.group(2)), csl(m.after))
-      } else if (Option(m.group(3)) != None) {
+      } else if (Option(m.group(3)) != None && m.group(3) != "") {
         NextTag(m.before.toString, ValueTag(m.group(3), false), m.after.toString)
-      } else if (Option(m.group(4)) != None) {
+      } else if (Option(m.group(4)) != None && m.group(4) != "") {
         NextTag(m.before.toString, ValueTag(m.group(4)), m.after.toString)
-      } else if (Option(m.group(5)) != None) {
+      } else if (Option(m.group(5)) != None && m.group(5) != "") {
         NextTag(csr(m.before), IncludeTag(m.group(5)), csl(m.after))
-      } else if (Option(m.group(6)) != None) {
+      } else if (Option(m.group(6)) != None && m.group(6) != "") {
         val collected = collectTags(m.after.toString, Vector.empty[Tag])
         val blockTag =
           BlockTag(m.group(6), m.group(7), collected.tags, collected.elseTags)
@@ -185,6 +186,7 @@ class Ickenham[T](
             val resolvedParams = params.map {
               case VariableNameListParam(names) => getVariableLoop(names, path)
               case TextParam(value) => adapter.asValue(value)
+              case param => adapter.asValue(param.toString)
             }
 
             val value = helper.flatMap(_(resolvedParams))
