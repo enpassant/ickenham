@@ -10,7 +10,6 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets._
 import java.nio.file.{Files, Paths}
 
-//import java.util.concurrent.ConcurrentHashMap
 import java.util.LinkedHashMap
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,7 +29,6 @@ class Ickenham[T](
   def this(adapter: Adapter[T]) =
     this(adapter, emptyHelpers, Ickenham.loadTemplate)
 
-  //val templates = new ConcurrentHashMap[String, Future[Template[_,T]]]()
   val templates = new LinkedHashMap[String, Option[Template[_,T]]]()
 
   def compile(template: String): T => String = {
