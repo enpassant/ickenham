@@ -9,7 +9,6 @@ class PlainAdapter extends Adapter[Any] {
     case Nil => true
     case "" => true
     case 0 => true
-    case 0.0 => true
     case null => true
     case _ => false
   }

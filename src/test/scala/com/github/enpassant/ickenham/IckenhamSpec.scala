@@ -33,6 +33,7 @@ class IckenhamSpec extends FunSpec with Matchers {
       val expectedCommentHtml = Ickenham.loadFile("expectedComment.html")
       resultHtml.replaceAll("\\s+", " ") shouldBe
         expectedCommentHtml.replaceAll("\\s+", " ")
+      stream.getResult
     }
   }
 
@@ -323,6 +324,91 @@ class IckenhamSpec extends FunSpec with Matchers {
       val sbs = new StringBuilderStream()
       ickenham.assemble(test)(sbs)(discussion)
       sbs.getResult shouldBe "Missing"
+    }
+
+    it("should assemble the if tag with 0") {
+      val ickenham = new Ickenham(adapterPlain)
+      val test = Vector(BlockTag("if", "int", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      ickenham.assemble(test)(sbs)(List(Map("int" -> 0)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with 0.0") {
+      val ickenham = new Ickenham(adapterPlain)
+      val test = Vector(BlockTag("if", "double", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      ickenham.assemble(test)(sbs)(List(Map("double" -> 0.0)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with Nil") {
+      val ickenham = new Ickenham(adapterPlain)
+      val test = Vector(BlockTag("if", "ls", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      ickenham.assemble(test)(sbs)(List(Map("ls" -> Nil)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with null") {
+      val ickenham = new Ickenham(adapterPlain)
+      val test = Vector(BlockTag("if", "obj", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      ickenham.assemble(test)(sbs)(List(Map("obj" -> null)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with 0 Java") {
+      val ickenham = new Ickenham(adapterJava)
+      val test = Vector(BlockTag("if", "int", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      val value: java.lang.Integer = new java.lang.Integer(0)
+      ickenham.assemble(test)(sbs)(List(Map("int" -> value)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with 0.0 Java") {
+      val ickenham = new Ickenham(adapterJava)
+      val test = Vector(BlockTag("if", "double", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      val value: java.lang.Double = new java.lang.Double(0.0)
+      ickenham.assemble(test)(sbs)(List(Map("double" -> value)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with empty Map Java") {
+      val ickenham = new Ickenham(adapterJava)
+      val test = Vector(BlockTag("if", "ls", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      val value: java.util.Map[String, String] = Map.empty[String, String].asJava
+      ickenham.assemble(test)(sbs)(List(Map("ls" -> value)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with Nil Java") {
+      val ickenham = new Ickenham(adapterJava)
+      val test = Vector(BlockTag("if", "ls", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      ickenham.assemble(test)(sbs)(List(Map("ls" -> Nil.asJava)))
+      sbs.getResult shouldBe "not found"
+    }
+
+    it("should assemble the if tag with null Java") {
+      val ickenham = new Ickenham(adapterJava)
+      val test = Vector(BlockTag("if", "obj", Vector(
+        TextTag("found")), Vector(TextTag("not found"))))
+      val sbs = new StringBuilderStream()
+      val value: java.lang.Double = null
+      ickenham.assemble(test)(sbs)(List(Map("obj" -> value)))
+      sbs.getResult shouldBe "not found"
     }
   }
 
