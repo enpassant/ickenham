@@ -1,6 +1,7 @@
 package com.github.enpassant.ickenham
 
 import com.github.enpassant.ickenham.adapter.Adapter
+import com.github.enpassant.ickenham.adapter.PlainAdapter
 import com.github.enpassant.ickenham.stream._
 
 import java.io.BufferedReader
@@ -8,7 +9,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 
 import java.nio.charset.StandardCharsets._
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, FileSystems, Paths}
 
 import java.util.LinkedHashMap
 
@@ -295,6 +296,14 @@ object Ickenham {
     resultTry.getOrElse("")
   }
 
+  def loadTemplateAtCurrentDir(relPath: String)(name: String): String =
+    loadFileAtCurrentDir(relPath, name + ".hbs")
+
+  def loadFileAtCurrentDir(relPath: String, fileName: String): String = {
+    val path = FileSystems.getDefault.getPath(relPath, fileName)
+    new String(Files.readAllBytes(path), UTF_8)
+  }
+
   def loadFromInputStream(is: InputStream) = {
     val reader = new BufferedReader(new InputStreamReader(is))
     val sb = new StringBuilder()
@@ -311,6 +320,15 @@ object Ickenham {
       reader.close()
     }
     sb.toString()
+  }
+
+  def native[T](
+    helpers: Helpers[T] = emptyHelpers,
+    loadTemplate: String => String =
+      Ickenham.loadTemplateAtCurrentDir("templates"),
+    adapter: Adapter[T] = new PlainAdapter()) =
+  {
+    new Ickenham[T](adapter, helpers, loadTemplate)
   }
 }
 
