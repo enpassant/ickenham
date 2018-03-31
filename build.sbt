@@ -86,6 +86,17 @@ lazy val springmvc = project
   )
   .dependsOn(ickenhamJVM)
 
+lazy val nativeExample = project
+  .in(file("modules/native-example"))
+  .settings(
+    commonSettings,
+    publish := {},
+    name := "ickenham-native-example",
+    libraryDependencies ++= Seq(
+    )
+  )
+  .dependsOn(ickenhamNative)
+
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .settings(
@@ -104,4 +115,6 @@ lazy val root = (project in file("."))
   .aggregate(json4s)
   .aggregate(springmvc)
   .aggregate(ickenhamJVM)
+  .aggregate(ickenhamNative)
+  .aggregate(nativeExample)
   .dependsOn(json4s)
