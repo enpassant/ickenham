@@ -15,7 +15,7 @@ You can find available versions [here](https://mvnrepository.com/artifact/com.gi
 ### SBT users
 
 ```scala
-"com.github.enpassant" %% "ickenham" % "1.3.0"
+"com.github.enpassant" %% "ickenham" % "1.4.0"
 ```
 
 ### Maven users
@@ -24,7 +24,7 @@ You can find available versions [here](https://mvnrepository.com/artifact/com.gi
 <dependency>
   <groupId>com.github.enpassant</groupId>
   <artifactId>ickenham_${scala.version}</artifactId>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
 </dependency>
 ```
 
@@ -35,7 +35,7 @@ Template engines benchmarked with the project [Spring compareing template engine
 In case you want to benchmark the different template engines I would recommend using [wrk](https://github.com/wg/wrk) HTTP benchmarking tool.
 
 ```
-wrk -c 100 -d 10 -t 10 http://localhost:8080/jsp
+wrk -c 100 -d 10 -t 10 http://localhost:8080/ickenham
 ```
 This runs benchmark for 10 seconds, using 10 threads, and keeping 100 HTTP connections open.
 

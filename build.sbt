@@ -1,7 +1,8 @@
 import sbtcrossproject.{crossProject, CrossType}
+import com.typesafe.sbt.pgp.PgpKeys.publishSigned
 
 lazy val commonSettings = Seq(
-  version := "1.4.0-SNAPSHOT",
+  version := "1.4.0",
   organization := "com.github.enpassant",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.4"),
@@ -110,6 +111,8 @@ lazy val root = (project in file("."))
       "org.json4s" %% "json4s-jackson" % "3.5.3" % "it,test"
     ),
     publish := {},
+    publishLocal := {},
+    publishSigned := {},
     testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
   )
   .aggregate(json4s)
