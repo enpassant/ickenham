@@ -289,11 +289,7 @@ object Ickenham {
   def loadTemplate(name: String): String = loadFile(name + ".hbs")
 
   def loadFile(fileName: String): String = {
-    val resultTry = Try {
-      new String(Files.readAllBytes(
-        Paths.get(getClass.getResource("/" + fileName).getFile)), UTF_8)
-    }
-    resultTry.getOrElse("")
+    loadFromInputStream(getClass.getResourceAsStream("/" + fileName))
   }
 
   def loadTemplateAtCurrentDir(relPath: String)(name: String): String =
