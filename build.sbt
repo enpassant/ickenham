@@ -2,7 +2,7 @@ import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys.publishSigned
 
 lazy val commonSettings = Seq(
-  version := "1.4.0",
+  version := "1.4.1",
   organization := "com.github.enpassant",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.4"),
