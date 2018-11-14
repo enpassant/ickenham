@@ -2,3 +2,4 @@
 *.log
 .history
 target/
+/out/
