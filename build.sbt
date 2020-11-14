@@ -1,11 +1,40 @@
 import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys.publishSigned
 
-lazy val commonSettings = Seq(
-  version := "1.5.0-SNAPSHOT",
+val dotty26 = "0.26.0"
+
+val scala2_11 = "2.11.12"
+val scala2_12 = "2.12.12"
+val scala2_13 = "2.13.3"
+
+val mainVersion = "1.5.0"
+
+lazy val commonSettingsDotty = Seq(
+  version := mainVersion,
   organization := "com.github.enpassant",
-  scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.4"),
+  scalaVersion := dotty26,
+  crossScalaVersions := Seq(
+    scala2_11, scala2_12, scala2_13,
+    dotty26
+  ),
+  scalacOptions ++= Seq("-feature", "-deprecation"),
+  javaOptions += "-Xmx512m"
+)
+
+lazy val commonSettings = Seq(
+  version := mainVersion,
+  organization := "com.github.enpassant",
+  scalaVersion := scala2_13,
+  crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13),
+  scalacOptions ++= Seq("-feature", "-deprecation"),
+  javaOptions += "-Xmx264m"
+)
+
+lazy val commonSettingsTest = Seq(
+  version := mainVersion,
+  organization := "com.github.enpassant",
+  scalaVersion := scala2_11,
+  crossScalaVersions := Seq(scala2_11),
   scalacOptions ++= Seq("-feature", "-deprecation"),
   javaOptions += "-Xmx264m"
 )
@@ -19,6 +48,7 @@ lazy val publishSettings = Seq(
     else
       Some("releases"  at nexus + "service/local/staging/deploy/maven2")
   },
+  publishConfiguration := publishConfiguration.value.withOverwrite(true),
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
   pomExtra := (
@@ -49,12 +79,17 @@ lazy val ickenham =
     .crossType(CrossType.Pure)
     .in(file("modules/ickenham"))
     .settings(
-      commonSettings,
+      libraryDependencies ++= Seq(
+        "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+      ),
       publishSettings,
+      sources in (Compile, doc) := Seq.empty,
       name := "ickenham"
+    ).jvmSettings(
+      commonSettingsDotty
+    ).nativeSettings(
+      commonSettingsTest
     )
-    .jvmSettings()
-    .nativeSettings()
 
 lazy val ickenhamJVM = ickenham.jvm
 lazy val ickenhamNative = ickenham.native
@@ -66,10 +101,10 @@ lazy val json4s = project
     publishSettings,
     name := "ickenham-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-jackson" % "3.5.3"
+      "com.github.enpassant" %% "ickenham" % mainVersion,
+      "org.json4s" %% "json4s-jackson" % "3.6.10"
     )
   )
-  .dependsOn(ickenhamJVM)
 
 lazy val springmvc = project
   .in(file("modules/spring-mvc"))
@@ -78,6 +113,7 @@ lazy val springmvc = project
     publishSettings,
     name := "ickenham-spring-mvc",
     libraryDependencies ++= Seq(
+      "com.github.enpassant" %% "ickenham" % mainVersion,
       "org.springframework" % "spring-webmvc" % "3.0.6.RELEASE",
       "javax.servlet" % "servlet-api" % "2.5" % "provided",
       "commons-logging" % "commons-logging-api" % "1.1" % "provided",
@@ -90,20 +126,22 @@ lazy val springmvc = project
 lazy val nativeExample = project
   .in(file("modules/native-example"))
   .settings(
-    commonSettings,
+    commonSettingsTest,
     publish := {},
     name := "ickenham-native-example",
     libraryDependencies ++= Seq(
+      "com.github.enpassant" %% "ickenham" % mainVersion,
     )
   )
-  .dependsOn(ickenhamNative)
 
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .settings(
-    commonSettings,
+    commonSettingsTest,
     Defaults.itSettings,
     libraryDependencies ++= Seq(
+      "com.github.enpassant" %% "ickenham" % mainVersion % "it,test",
+      "com.github.enpassant" %% "ickenham-json4s" % mainVersion % "it,test",
       "org.scalatest" %% "scalatest" % "3.0.4" % "it,test",
       "com.storm-enroute" %% "scalameter" % "0.9" % "it,test",
       "com.github.spullara.mustache.java" % "compiler" % "0.9.4" % "it,test",
@@ -115,7 +153,3 @@ lazy val root = (project in file("."))
     publishSigned := {},
     testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
   )
-  .aggregate(json4s)
-  .aggregate(springmvc)
-  .aggregate(ickenhamJVM)
-  .dependsOn(json4s)

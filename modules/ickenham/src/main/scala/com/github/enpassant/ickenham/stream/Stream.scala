@@ -17,7 +17,7 @@ class StringBuilderStream extends Stream[String] {
     sb.append(text)
   }
 
-  override def getResult(): String = {
+  override def getResult: String = {
     val result = sb.toString
     sb.setLength(0)
     result
@@ -31,7 +31,7 @@ class OutputStreamStream(val os: OutputStream) extends Stream[Unit] {
     writer.write(text)
   }
 
-  override def getResult(): Unit = writer.close
+  override def getResult: Unit = writer.close
 }
 
 class WriterStream(val writer: Writer) extends Stream[Unit] {
@@ -39,5 +39,5 @@ class WriterStream(val writer: Writer) extends Stream[Unit] {
     writer.write(text)
   }
 
-  override def getResult(): Unit = writer.close
+  override def getResult: Unit = writer.close
 }

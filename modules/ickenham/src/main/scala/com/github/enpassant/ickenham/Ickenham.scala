@@ -30,14 +30,14 @@ class Ickenham[T](
   def this(adapter: Adapter[T]) =
     this(adapter, emptyHelpers, Ickenham.loadTemplate)
 
-  val templates = new LinkedHashMap[String, Option[Template[_,T]]]()
+  val templates = new LinkedHashMap[String, Option[Template[Any,T]]]()
 
   def compile(template: String): T => String = {
     val compiledFn = compileWithStream[String](template)
     val sbs = new StringBuilderStream()
     json =>
       compiledFn(sbs)(List(json))
-      sbs.getResult()
+      sbs.getResult
   }
 
   def compileWithStream[R](templateName: String): Stream[R] => List[T] => Unit = {
@@ -48,7 +48,7 @@ class Ickenham[T](
       val template = loadTemplate(templateName)
       val tags = parse(template)
       val assembledFn = assemble[R](tags)
-        .asInstanceOf[Stream[R] => List[T] => Unit]
+        .asInstanceOf[Stream[_] => List[T] => Unit]
       templates.synchronized {
         templates.put(templateName, Some(assembledFn))
       }
@@ -171,7 +171,7 @@ class Ickenham[T](
     val substituted = tags.map { tag =>
       tag match {
         case TextTag(text) =>
-          stream: Stream[_] => path: List[T] => stream.push(text)
+          (stream: Stream[_]) => (path: List[T]) => stream.push(text)
         case HelperTag(helperName, parameters) =>
           val helper = helpers.get(helperName)
           val params = parameters.map {
@@ -181,7 +181,7 @@ class Ickenham[T](
             case param => param
           }
 
-          stream: Stream[_] => path: List[T] =>
+          (stream: Stream[_]) => (path: List[T]) =>
             val resolvedParams = params.map {
               case VariableNameListParam(names) => getVariableLoop(names, path)
               case TextParam(value) => adapter.asValue(value)
@@ -189,12 +189,12 @@ class Ickenham[T](
             }
 
             val value = helper.flatMap(_(resolvedParams))
-            value foreach { v: Any =>
+            value foreach { (v: Any) =>
               stream.push(v.toString)
             }
         case ValueTag(variableName, needEscape) =>
           val names = getVariableNameList(variableName)
-          stream: Stream[_] => path: List[T] =>
+          (stream: Stream[_]) => (path: List[T]) =>
             val value = getVariableLoop(names, path)
             val result = adapter.extractString(value)
             if (needEscape) {
@@ -210,7 +210,7 @@ class Ickenham[T](
           val substitutedElseFn = substitute(elseContent)
           val names = getVariableNameList(name)
 
-          stream: Stream[_] => path: List[T] =>
+          (stream: Stream[_]) => (path: List[T]) =>
             if (adapter.isEmpty(getVariableLoop(names, path, true))) {
               substitutedElseFn(stream)(path)
             } else {
@@ -220,18 +220,18 @@ class Ickenham[T](
           val substitutedFn = substitute(content)
           val names = getVariableNameList(name)
 
-          stream: Stream[_] => path: List[T] =>
+          (stream: Stream[_]) => (path: List[T]) =>
             val children = adapter.getChildren(getVariableLoop(names, path))
             children foreach { item =>
               substitutedFn(stream)(item :: path)
             }
         case BlockTag(blockName, name, content, _) =>
-          stream: Stream[_] => path: List[T] => stream.push(s"Block: $blockName")
+          (stream: Stream[_]) => (path: List[T]) => stream.push(s"Block: $blockName")
         case _ =>
-          stream: Stream[_] => path: List[T] => stream.push("ERROR!")
+          (stream: Stream[_]) => (path: List[T]) => stream.push("ERROR!")
       }
     }
-    stream: Stream[_] => path: List[T] => substituted.foreach(_(stream)(path))
+    (stream: Stream[_]) => (path: List[T]) => substituted.foreach(_(stream)(path))
   }
 
   def escape(string: String) = {
@@ -305,13 +305,14 @@ object Ickenham {
     val sb = new StringBuilder()
     try {
       var notExit = true
-      do {
+      while ({
         val line = reader.readLine()
         notExit = Option(line) != None
         if (notExit) {
           sb.append(line).append("\n")
         }
-      } while (notExit)
+        notExit
+      }) ()
     } finally {
       reader.close()
     }
